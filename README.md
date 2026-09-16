@@ -88,6 +88,7 @@ claude-secrets set NOM              # ajouter une clé (saisie masquée)
 claude-secrets set-login NOM        # ajouter un identifiant + mot de passe
 claude-secrets rm NOM               # supprimer
 claude-secrets doctor               # vérifier l'installation
+claude-secrets version              # version installée
 claude-secrets install              # (re)déployer la configuration
 claude-secrets import fichier.env   # importer depuis un .env existant
 ```
@@ -149,6 +150,50 @@ source "$XDG_RUNTIME_DIR/claude-secrets.env" && <votre commande>
 ```
 
 ---
+
+## Mise à jour
+
+```bash
+cd claude-secrets
+git pull
+./install.sh
+```
+
+ou, équivalent : `make update`.
+
+L'installateur est idempotent : il remplace la commande, redéploie la
+configuration sans dupliquer quoi que ce soit, et affiche l'ancienne et la
+nouvelle version.
+
+```
+✓ Mise à jour depuis Claude Secrets 1.0.0 → Claude Secrets 1.1.0
+```
+
+**Vos secrets ne sont jamais touchés** par une mise à jour : ils vivent dans le
+trousseau, pas dans les fichiers du projet.
+
+Après une mise à jour, deux gestes :
+
+- **fermez et relancez l'application** si elle était ouverte (elle tourne sur
+  l'ancien code tant qu'elle n'est pas redémarrée) ;
+- **ouvrez un nouveau terminal** pour recharger l'environnement.
+
+### Savoir si vous êtes à jour
+
+```bash
+claude-secrets version    # version installée
+claude-secrets doctor     # état complet
+```
+
+Lancé depuis le dépôt, `doctor` compare la copie du dépôt à celle installée et
+signale un décalage :
+
+```
+La version installée diffère de celle de ce dépôt.
+Mets à jour avec :  ./install.sh
+```
+
+Le [journal des versions](CHANGELOG.md) liste les changements.
 
 ## Ce qui est déployé
 

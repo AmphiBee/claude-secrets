@@ -54,9 +54,18 @@ fi
 ok "Dépendances présentes."
 
 # ── 2. Copie de la commande ──────────────────────────────────────────────────
+ACTION="Installation"
+if [ -x "$BIN_DIR/claude-secrets" ]; then
+  # Les versions < 1.1.0 ne connaissent pas `version` et affichent leur aide :
+  # on n'accepte que ce qui ressemble vraiment à un numéro de version.
+  ANCIENNE="$("$BIN_DIR/claude-secrets" version 2>/dev/null \
+              | grep -oE 'Claude Secrets [0-9]+\.[0-9]+\.[0-9]+' || true)"
+  [ -n "$ANCIENNE" ] || ANCIENNE="une version antérieure"
+  ACTION="Mise à jour depuis $ANCIENNE"
+fi
 mkdir -p "$BIN_DIR"
 install -m 755 "$SRC" "$BIN_DIR/claude-secrets"
-ok "Commande installée dans $BIN_DIR/claude-secrets"
+ok "$ACTION → $("$BIN_DIR/claude-secrets" version)"
 
 # ── 3. Intégration (shell, règles Claude Code, lanceur) ──────────────────────
 say "Déploiement dans le dossier personnel…"
@@ -65,6 +74,7 @@ say "Déploiement dans le dossier personnel…"
 echo
 ok "Terminé."
 echo
+echo "  Si l'application était ouverte, ferme-la et relance-la."
 echo "  Ouvre un nouveau terminal, puis :"
 echo "    claude-secrets            # interface graphique"
 echo "    claude-secrets set NOM    # ajouter une clé"
