@@ -110,6 +110,31 @@ CLIENTX_WP  →  $CLIENTX_WP_USER  et  $CLIENTX_WP_PASSWORD
 curl -u "$CLIENTX_WP_USER:$CLIENTX_WP_PASSWORD" https://client-x.fr/wp-json/wp/v2/posts
 ```
 
+### Identifiants AWS
+
+Les clés AWS sont un cas à part : en faire des variables d'environnement
+écraserait globalement le profil par défaut et rendrait `--profile`
+imprévisible. Claude Secrets les stocke donc **hors environnement** et les sert
+à la demande via `credential_process`, compris nativement par l'AWS CLI, les
+SDK et Terraform.
+
+```bash
+claude-secrets aws-import              # importe les profils dans le trousseau
+claude-secrets aws-import --activate   # + bascule ~/.aws/config dessus
+```
+
+L'activation écrit une ligne `credential_process` par profil dans
+`~/.aws/config`, puis renomme `~/.aws/credentials` en `credentials.disabled`
+(ce fichier est prioritaire, il doit être écarté). Les deux fichiers sont
+sauvegardés avant modification.
+
+```bash
+aws sts get-caller-identity --profile amphibee   # vérification
+```
+
+Pour revenir en arrière : restaurez `credentials.disabled` et retirez les
+lignes `credential_process` de `~/.aws/config`.
+
 ### Au quotidien avec Claude Code
 
 Demandez simplement : « utilise le token Cloudflare pour lister mes zones ».
