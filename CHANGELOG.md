@@ -1,5 +1,11 @@
 # Journal des versions
 
+## 1.1.1
+
+- Correction : afficher ou masquer le mot de passe d'une entrée identifiant +
+  mot de passe repliait la ligne. L'affichage est désormais mis à jour sur
+  place, et les lignes dépliées le restent après une modification.
+
 ## 1.1.0
 
 - Identifiants AWS servis via `credential_process` : les clés restent dans le
