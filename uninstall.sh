@@ -53,6 +53,7 @@ if s.exists():
         print(f"  settings.json inchangé ({e})")
 
 for f in (HOME / ".local/share/applications/fr.amphibee.ClaudeSecrets.desktop",
+          HOME / ".local/share/icons/hicolor/scalable/apps/fr.amphibee.ClaudeSecrets.svg",
           HOME / ".local/bin/claude-secrets",
           HOME / ".config/claude-secrets/state.json"):
     if f.exists():

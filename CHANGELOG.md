@@ -1,5 +1,17 @@
 # Journal des versions
 
+## 1.2.0
+
+- Nouvelle icône d'application
+- Interface repensée : entrées rangées par section (clés et tokens,
+  identifiants, AWS, hors environnement), pastille colorée par service, actions
+  secondaires regroupées dans un menu, bandeau récapitulatif
+- Recherche qui s'ouvre dès qu'on tape, raccourcis clavier (Ctrl+N, Ctrl+F),
+  fenêtre « À propos »
+- Profils AWS affichés comme une seule entrée, avec la commande à utiliser
+- Valeurs masquées sur une longueur fixe, qui ne trahit plus la taille du secret
+- Correction : modifier un secret hors environnement le rendait exporté
+
 ## 1.1.1
 
 - Correction : afficher ou masquer le mot de passe d'une entrée identifiant +

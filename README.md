@@ -79,6 +79,16 @@ Lancez **Claude Secrets** depuis le menu des applications, ou `claude-secrets`.
 Au premier lancement, l'application propose de déployer sa configuration et
 affiche exactement ce qui sera modifié.
 
+Les secrets sont rangés par section : clés et tokens, identifiants, profils AWS
+et secrets hors environnement. Les actions courantes (afficher, copier) sont
+directement sur chaque ligne ; modifier et supprimer sont dans le menu ⋮.
+
+| Raccourci | Action |
+|---|---|
+| `Ctrl+N` | Nouveau secret |
+| `Ctrl+F` | Rechercher (ou tapez directement) |
+| `Échap` | Fermer la recherche |
+
 ### Ligne de commande
 
 ```bash
@@ -197,7 +207,7 @@ Le [journal des versions](CHANGELOG.md) liste les changements.
 
 ## Ce qui est déployé
 
-`claude-secrets install` écrit cinq choses, toutes dans votre dossier
+`claude-secrets install` écrit six choses, toutes dans votre dossier
 personnel, encadrées par des marqueurs pour rester réversibles :
 
 | Élément | Emplacement |
@@ -207,6 +217,7 @@ personnel, encadrées par des marqueurs pour rester réversibles :
 | Règles de manipulation | `~/.claude/CLAUDE.md` |
 | Garde-fous anti-fuite | `~/.claude/settings.json` |
 | Lanceur d'application | `~/.local/share/applications/` |
+| Icône | `~/.local/share/icons/hicolor/` |
 
 L'opération est **idempotente** : la relancer ne duplique rien. Les fichiers
 existants sont sauvegardés (`.bak-<horodatage>`) et leur contenu préservé —
