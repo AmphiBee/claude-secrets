@@ -148,7 +148,13 @@ mot de passe maître, puis le dossier à synchroniser.
 claude-secrets bw-sync            # synchroniser
 claude-secrets bw-sync --prune    # + supprimer localement ce qui a quitté le coffre
 claude-secrets bw-lock            # oublier la session
+claude-secrets bw-logout          # déconnecter le compte (pour changer de serveur)
 ```
+
+Si un compte est déjà connecté, `bw-setup` le détecte et ne redemande que le
+mot de passe maître : le CLI Bitwarden refuse de changer de serveur tant qu'une
+session existe. Pour basculer vers un autre serveur ou un autre compte, passez
+d'abord par `claude-secrets bw-logout`.
 
 La synchronisation est aussi accessible depuis le menu de l'application.
 

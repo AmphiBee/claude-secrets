@@ -1,5 +1,13 @@
 # Journal des versions
 
+## 1.3.2
+
+- Corrige : `bw-setup` échouait avec « Logout required before server config
+  update » quand un compte était déjà connecté. La configuration détecte
+  maintenant la session en cours et ne redemande que le mot de passe maître.
+- Changer de serveur alors qu'un compte est connecté donne un message clair
+- Nouvelle commande `bw-logout`
+
 ## 1.3.1
 
 - Corrige : une URL de serveur saisie sans `https://` était utilisée telle quelle
