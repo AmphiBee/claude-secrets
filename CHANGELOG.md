@@ -1,5 +1,13 @@
 # Journal des versions
 
+## 1.3.1
+
+- Corrige : une URL de serveur saisie sans `https://` était utilisée telle quelle
+- Corrige : sur un serveur auto-hébergé plus ancien que le CLI, la connexion
+  réussissait mais l'étape de migration suivante la faisait passer pour un
+  échec. L'état réel du compte est désormais vérifié, et le message d'erreur
+  explique comment aligner les versions.
+
 ## 1.3.0
 
 - Synchronisation depuis Bitwarden (service officiel, instance auto-hébergée et

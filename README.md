@@ -152,6 +152,21 @@ claude-secrets bw-lock            # oublier la session
 
 La synchronisation est aussi accessible depuis le menu de l'application.
 
+#### Serveur auto-hébergé plus ancien que le CLI
+
+Les versions récentes du CLI Bitwarden lancent, juste après l'authentification,
+une étape de migration que les serveurs auto-hébergés n'implémentent pas
+toujours. La connexion réussit, puis le CLI affiche une erreur
+(`key_id_backfill`, `Encrypted Migrator`, HTTP 404) et s'arrête en échec.
+
+Claude Secrets le détecte : si le compte est bien connecté, la configuration
+continue. Si vous préférez supprimer l'erreur à la source, alignez le CLI sur
+la version de votre serveur :
+
+```bash
+npm install -g @bitwarden/cli@2026.6.0    # version de votre serveur
+```
+
 #### Le mot de passe maître
 
 Le CLI Bitwarden fonctionne en deux temps : la connexion, puis le
