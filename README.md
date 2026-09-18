@@ -121,6 +121,66 @@ CLIENTX_WP  →  $CLIENTX_WP_USER  et  $CLIENTX_WP_PASSWORD
 curl -u "$CLIENTX_WP_USER:$CLIENTX_WP_PASSWORD" https://client-x.fr/wp-json/wp/v2/posts
 ```
 
+### Synchroniser depuis Bitwarden
+
+Vos secrets peuvent venir d'un coffre Bitwarden — le service officiel comme une
+instance auto-hébergée (Vaultwarden compris). La synchronisation va **dans un
+seul sens**, du coffre vers le trousseau : rien n'est jamais renvoyé vers
+Bitwarden.
+
+Prérequis : le CLI Bitwarden.
+
+```bash
+npm install -g @bitwarden/cli     # ou : sudo snap install bw
+```
+
+Première connexion, dans un terminal (elle peut demander un code à deux
+facteurs) :
+
+```bash
+claude-secrets bw-setup
+```
+
+Elle demande l'URL du serveur (vide pour bitwarden.com), l'adresse e-mail, le
+mot de passe maître, puis le dossier à synchroniser.
+
+```bash
+claude-secrets bw-sync            # synchroniser
+claude-secrets bw-sync --prune    # + supprimer localement ce qui a quitté le coffre
+claude-secrets bw-lock            # oublier la session
+```
+
+La synchronisation est aussi accessible depuis le menu de l'application.
+
+#### Le mot de passe maître
+
+Le CLI Bitwarden fonctionne en deux temps : la connexion, puis le
+**déverrouillage**, qui exige le mot de passe maître et renvoie une clé de
+session. Une clé d'API Bitwarden ne dispense pas du déverrouillage.
+
+Claude Secrets ne conserve **jamais** le mot de passe maître. Il garde la clé
+de session, chiffrée dans le trousseau, et la réutilise pour les
+synchronisations suivantes. Quand elle n'est plus valable, le mot de passe est
+redemandé. `claude-secrets bw-lock` ou `bw lock` la révoque immédiatement.
+
+#### Ce qui est importé
+
+Seuls les éléments du dossier choisi sont lus. Le nom de l'élément devient le
+nom de la variable (`Cloudflare API` → `CLOUDFLARE_API`).
+
+| Dans Bitwarden | Devient |
+|---|---|
+| Identifiant avec mot de passe seul | `NOM` |
+| Identifiant avec nom d'utilisateur + mot de passe | `NOM_USER` et `NOM_PASSWORD` |
+| Champ personnalisé **masqué** | `NOM_CHAMP` |
+| Champ personnalisé visible | ignoré |
+
+Deux champs personnalisés pilotent l'import :
+
+- `claude_secrets_name` — impose le nom de la variable plutôt que de le déduire
+- `claude_secrets_export` à `false` — le secret est stocké mais **jamais**
+  exposé dans l'environnement
+
 ### Identifiants AWS
 
 Les clés AWS sont un cas à part : en faire des variables d'environnement

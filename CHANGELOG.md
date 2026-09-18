@@ -1,5 +1,17 @@
 # Journal des versions
 
+## 1.3.0
+
+- Synchronisation depuis Bitwarden (service officiel, instance auto-hébergée et
+  Vaultwarden) : `bw-setup`, `bw-sync`, `bw-lock`, et une entrée dans le menu
+- Le mot de passe maître n'est jamais conservé ; seule la clé de session l'est,
+  chiffrée dans le trousseau, et le déverrouillage est redemandé si elle expire
+- Import du dossier Bitwarden choisi, avec champs `claude_secrets_name` et
+  `claude_secrets_export`
+- `--prune` supprime localement les secrets retirés du coffre
+- Les secrets retiennent leur origine ; les entrées réservées à l'outil sont
+  masquées dans l'app et la CLI
+
 ## 1.2.0
 
 - Nouvelle icône d'application
