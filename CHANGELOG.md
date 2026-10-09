@@ -1,5 +1,29 @@
 # Journal des versions
 
+## 1.4.1
+
+- **Important** : `--prune` ne supprimait pas seulement les secrets du dossier
+  synchronisé, mais tout secret d'origine Bitwarden absent de ce dossier.
+  Synchroniser un second dossier avec `--prune` effaçait donc le premier.
+  L'origine retient désormais le dossier, et `--prune` refuse un dossier vide.
+- Suite de tests dans `tests/` (`make test`) : logique, stockage,
+  synchronisation sur un faux CLI, et interface
+
+## 1.4.0
+
+Affichage et recherche repensés pour les gros coffres (plusieurs centaines de
+secrets) : l'affichage passait de 21 s à moins de 0,3 s, et la recherche de
+20 s par frappe à environ 0,2 s.
+
+- La valeur des secrets est lue en mémoire plutôt que par un appel D-Bus par
+  secret
+- La lecture du trousseau se fait en arrière-plan, fenêtre utilisable aussitôt
+- Les données restent en mémoire : la recherche ne relit plus le trousseau, et
+  elle est temporisée le temps de la frappe
+- Le détail d'une entrée n'est construit qu'au dépliage, et le menu ⋮ qu'à son
+  ouverture
+- La liste s'affiche par lots, plafonnée à 75 entrées avec « Tout afficher »
+
 ## 1.3.2
 
 - Corrige : `bw-setup` échouait avec « Logout required before server config

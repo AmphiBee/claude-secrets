@@ -304,6 +304,32 @@ L'opération est **idempotente** : la relancer ne duplique rien. Les fichiers
 existants sont sauvegardés (`.bak-<horodatage>`) et leur contenu préservé —
 le bloc est ajouté à côté, jamais à la place.
 
+## Tests
+
+```bash
+make test                      # tout
+/usr/bin/python3 tests/run.py core        # logique et stockage
+/usr/bin/python3 tests/run.py bitwarden   # synchronisation (faux CLI, hors ligne)
+/usr/bin/python3 tests/run.py gui         # interface (session graphique requise)
+```
+
+Les tests écrivent dans le trousseau des secrets préfixés `ZZTEST_`, supprimés
+à la fin, et n'utilisent ni compte ni serveur Bitwarden réels : un faux CLI
+(`tests/fake-bw`) simule le coffre. La configuration de l'utilisateur est
+sauvegardée puis restaurée.
+
+## Gros coffres
+
+Avec plusieurs centaines de secrets, la lecture du trousseau prend quelques
+secondes : chaque entrée est déchiffrée individuellement. L'application en tient
+compte — la fenêtre s'ouvre immédiatement, la lecture se fait en arrière-plan,
+la liste s'affiche par lots et la recherche travaille en mémoire sans jamais
+relire le trousseau.
+
+Au-delà de 75 entrées, seules les premières sont affichées, avec un bouton
+« Tout afficher ». **La recherche porte toujours sur l'ensemble des secrets**,
+affichés ou non.
+
 ## Modèle de sécurité
 
 **Ce qui est protégé.** Les secrets sont chiffrés au repos par le trousseau.

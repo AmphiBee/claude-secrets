@@ -1,6 +1,6 @@
 PREFIX ?= $(HOME)/.local
 
-.PHONY: install update uninstall check version
+.PHONY: install update uninstall check test version
 
 install:
 	@./install.sh
@@ -11,6 +11,9 @@ update:
 
 uninstall:
 	@./uninstall.sh
+
+test:
+	@/usr/bin/python3 tests/run.py
 
 check:
 	@/usr/bin/python3 -m py_compile claude-secrets && echo "syntaxe OK"

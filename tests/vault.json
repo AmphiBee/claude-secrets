@@ -1,0 +1,101 @@
+{
+ "folders": [
+  {
+   "id": "f1",
+   "name": "Claude Secrets"
+  },
+  {
+   "id": "f2",
+   "name": "Autre"
+  },
+  {
+   "id": "f3",
+   "name": "Vide"
+  }
+ ],
+ "items": [
+  {
+   "id": "i1",
+   "folderId": "f1",
+   "name": "ZZTEST Cloudflare",
+   "login": {
+    "username": "",
+    "password": "cf-token"
+   },
+   "fields": []
+  },
+  {
+   "id": "i2",
+   "folderId": "f1",
+   "name": "ZZTEST Client",
+   "login": {
+    "username": "o@x.fr",
+    "password": "wp-pass"
+   },
+   "fields": []
+  },
+  {
+   "id": "i3",
+   "folderId": "f1",
+   "name": "Ignoré",
+   "login": {
+    "username": "a@x.fr",
+    "password": "p"
+   },
+   "fields": [
+    {
+     "name": "claude_secrets_name",
+     "value": "ZZTEST_RENOMME",
+     "type": 0
+    }
+   ]
+  },
+  {
+   "id": "i4",
+   "folderId": "f1",
+   "name": "ZZTEST Stripe",
+   "login": {
+    "username": "",
+    "password": "sk_live"
+   },
+   "fields": [
+    {
+     "name": "webhook",
+     "value": "whsec",
+     "type": 1
+    },
+    {
+     "name": "visible",
+     "value": "pas secret",
+     "type": 0
+    }
+   ]
+  },
+  {
+   "id": "i5",
+   "folderId": "f1",
+   "name": "ZZTEST Interne",
+   "login": {
+    "username": "",
+    "password": "privee"
+   },
+   "fields": [
+    {
+     "name": "claude_secrets_export",
+     "value": "false",
+     "type": 0
+    }
+   ]
+  },
+  {
+   "id": "i9",
+   "folderId": "f2",
+   "name": "ZZTEST Hors dossier",
+   "login": {
+    "username": "",
+    "password": "non"
+   },
+   "fields": []
+  }
+ ]
+}

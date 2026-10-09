@@ -1,0 +1,73 @@
+#!/usr/bin/python3
+"""Faux CLI Bitwarden : simule un coffre pour les tests, sans réseau ni compte.
+
+Pilotage par variables d'environnement :
+  FAKE_BW_STATE     fichier d'état (statut, session, serveur)
+  FAKE_BW_VAULT     fichier décrivant dossiers et éléments
+  FAKE_BW_MIGRATOR  si défini, « login » échoue APRÈS authentification
+                    (reproduit un serveur auto-hébergé plus ancien que le CLI)
+"""
+import json, os, sys, pathlib
+
+STATE = pathlib.Path(os.environ["FAKE_BW_STATE"])
+VAULT = json.loads(pathlib.Path(os.environ["FAKE_BW_VAULT"]).read_text())
+PASSWORD = "bonmotdepasse"
+
+
+def load():
+    if STATE.exists():
+        return json.loads(STATE.read_text())
+    return {"status": "unauthenticated", "session": None, "server": None}
+
+
+def save(s):
+    STATE.write_text(json.dumps(s))
+
+
+a, s = sys.argv[1:], load()
+
+if a[:1] == ["status"]:
+    st = s["status"]
+    if st == "unlocked" and os.environ.get("BW_SESSION") != s["session"]:
+        st = "locked"
+    print(json.dumps({"status": st, "serverUrl": s["server"],
+                      "userEmail": "olivier@exemple.fr" if st != "unauthenticated" else None}))
+    sys.exit(0)
+
+if a[:2] == ["config", "server"]:
+    if s["status"] != "unauthenticated":
+        print("Logout required before server config update.", file=sys.stderr)
+        sys.exit(1)
+    s["server"] = a[2]; save(s); print("Saved setting `config`."); sys.exit(0)
+
+if a[:1] == ["lock"]:
+    s.update(status="locked", session=None); save(s)
+    print("Your vault is locked."); sys.exit(0)
+
+if a[:1] == ["logout"]:
+    s.update(status="unauthenticated", session=None); save(s)
+    print("You have logged out."); sys.exit(0)
+
+if a[:1] in (["login"], ["unlock"]):
+    if os.environ.get("BW_PASSWORD") != PASSWORD:
+        print("Invalid master password.", file=sys.stderr); sys.exit(1)
+    if a[:1] == ["login"] and os.environ.get("FAKE_BW_MIGRATOR"):
+        s.update(status="locked", session=None); save(s)
+        print("ERROR key_id_backfill: 404 Not Found", file=sys.stderr); sys.exit(1)
+    s.update(status="unlocked", session="SESSION-XYZ"); save(s)
+    print("SESSION-XYZ"); sys.exit(0)
+
+if os.environ.get("BW_SESSION") != s.get("session") or s["status"] != "unlocked":
+    print("Vault is locked.", file=sys.stderr); sys.exit(1)
+
+if a[:1] == ["sync"]:
+    print("Syncing complete."); sys.exit(0)
+if a[:2] == ["list", "folders"]:
+    print(json.dumps(VAULT["folders"])); sys.exit(0)
+if a[:2] == ["list", "items"]:
+    fid = a[a.index("--folderid") + 1]
+    print(json.dumps([i for i in VAULT["items"] if i.get("folderId") == fid]))
+    sys.exit(0)
+
+print("commande inconnue: " + " ".join(a), file=sys.stderr)
+sys.exit(2)
