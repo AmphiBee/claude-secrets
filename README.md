@@ -165,12 +165,14 @@ une étape de migration que les serveurs auto-hébergés n'implémentent pas
 toujours. La connexion réussit, puis le CLI affiche une erreur
 (`key_id_backfill`, `Encrypted Migrator`, HTTP 404) et s'arrête en échec.
 
-Claude Secrets le détecte : si le compte est bien connecté, la configuration
-continue. Si vous préférez supprimer l'erreur à la source, alignez le CLI sur
+Claude Secrets le détecte, à la connexion comme au déverrouillage : si la
+session est bien ouverte, l'opération continue. Si vous préférez supprimer l'erreur à la source, alignez le CLI sur
 la version de votre serveur :
 
 ```bash
-npm install -g @bitwarden/cli@2026.6.0    # version de votre serveur
+# version du serveur :
+curl -s https://vault.exemple.fr/api/config | head -c 60
+npm install -g @bitwarden/cli@2026.6.0    # la même version
 ```
 
 #### Le mot de passe maître

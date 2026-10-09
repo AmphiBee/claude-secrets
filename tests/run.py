@@ -213,6 +213,25 @@ def _test_bitwarden(cs, tmp):
     check("connexion « en échec » mais compte connecté → pas d'exception",
           cs.bw_login("o@exemple.fr", "bonmotdepasse") is None)
 
+    # même défaut au déverrouillage : la session est ouverte, la clé est
+    # écrite, puis la migration échoue
+    os.environ["FAKE_BW_MIGRATOR_UNLOCK"] = "1"
+    try:
+        session = cs.bw_unlock("bonmotdepasse")
+        check("déverrouillage « en échec » : la session est récupérée",
+              session == "SESSION-XYZ")
+        cs.store_set(cs.BW_SESSION_KEY, session, export=False)
+        check("synchronisation possible malgré l'erreur de migration",
+              cs.bw_sync(folder="Claude Secrets")["total"] > 0)
+        try:
+            cs.bw_unlock("mauvais")
+            check("mot de passe refusé reste une vraie erreur", False)
+        except cs.BwError as e:
+            check("mot de passe refusé reste une vraie erreur",
+                  "migration" not in str(e))
+    finally:
+        os.environ.pop("FAKE_BW_MIGRATOR_UNLOCK", None)
+
 
 # ───────────────────────────── interface ─────────────────────────────────────
 

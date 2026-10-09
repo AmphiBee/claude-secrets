@@ -4,8 +4,9 @@
 Pilotage par variables d'environnement :
   FAKE_BW_STATE     fichier d'état (statut, session, serveur)
   FAKE_BW_VAULT     fichier décrivant dossiers et éléments
-  FAKE_BW_MIGRATOR  si défini, « login » échoue APRÈS authentification
-                    (reproduit un serveur auto-hébergé plus ancien que le CLI)
+  FAKE_BW_MIGRATOR         « login » échoue APRÈS authentification
+  FAKE_BW_MIGRATOR_UNLOCK  « unlock » échoue APRÈS ouverture de la session
+                           (serveur auto-hébergé plus ancien que le CLI)
 """
 import json, os, sys, pathlib
 
@@ -55,7 +56,11 @@ if a[:1] in (["login"], ["unlock"]):
         s.update(status="locked", session=None); save(s)
         print("ERROR key_id_backfill: 404 Not Found", file=sys.stderr); sys.exit(1)
     s.update(status="unlocked", session="SESSION-XYZ"); save(s)
-    print("SESSION-XYZ"); sys.exit(0)
+    print("SESSION-XYZ")
+    if a[:1] == ["unlock"] and os.environ.get("FAKE_BW_MIGRATOR_UNLOCK"):
+        # session ouverte, clé déjà écrite, puis échec de la migration
+        print("ERROR key_id_backfill: 404 Not Found", file=sys.stderr); sys.exit(1)
+    sys.exit(0)
 
 if os.environ.get("BW_SESSION") != s.get("session") or s["status"] != "unlocked":
     print("Vault is locked.", file=sys.stderr); sys.exit(1)

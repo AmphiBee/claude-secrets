@@ -1,5 +1,13 @@
 # Journal des versions
 
+## 1.4.3
+
+- Le déverrouillage subit la même limite que la connexion sur un serveur
+  auto-hébergé plus ancien que le CLI : la session s'ouvre, puis la migration
+  de clés échoue et la commande sort en erreur. La clé de session est
+  désormais récupérée et vérifiée avant de conclure à un mot de passe refusé ;
+  sinon le message indique comment aligner les versions.
+
 ## 1.4.2
 
 - Corrige : chaque installation réécrivait le fichier d'état en entier et
