@@ -1,5 +1,11 @@
 # Journal des versions
 
+## 1.4.2
+
+- Corrige : chaque installation réécrivait le fichier d'état en entier et
+  effaçait donc la configuration Bitwarden (serveur, compte, dossier). Une
+  mise à jour obligeait à refaire `bw-setup`.
+
 ## 1.4.1
 
 - **Important** : `--prune` ne supprimait pas seulement les secrets du dossier

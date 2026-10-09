@@ -99,6 +99,19 @@ def test_core(cs):
     check("nom de profil AWS lisible",
           cs.aws_profile_label("AWS_AMPHIBEE") == "amphibee")
 
+    # une installation ne doit pas effacer le reste de l'état local
+    saved = cs.STATE.read_text() if cs.STATE.exists() else None
+    try:
+        cs.state_update(bitwarden={"folder": "ZZTEST", "email": "o@x.fr"})
+        cs.state_update(installed=True, version=1)
+        check("l'installation préserve la configuration Bitwarden",
+              cs.bw_conf().get("folder") == "ZZTEST")
+    finally:
+        if saved is not None:
+            cs.STATE.write_text(saved)
+        elif cs.STATE.exists():
+            cs.STATE.unlink()
+
 
 # ───────────────────────────── synchronisation ───────────────────────────────
 
