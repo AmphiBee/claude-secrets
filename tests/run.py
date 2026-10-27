@@ -323,12 +323,23 @@ def test_gui(cs):
                 break
             GLib.MainContext.default().iteration(False)
             time.sleep(0.1)
+        reads = []
+        real_store_all = cs.store_all
+        cs.store_all = lambda *a, **k: (reads.append(1), real_store_all(*a, **k))[1]
         win.activate_action("win.delete",
                             GLib.Variant.new_string(f"single|{PREFIX}ORIGINE"))
         check("supprimer ne demande pas de confirmation",
               cs.store_get(PREFIX + "ORIGINE") is None)
+        check("le cache shell suit la suppression",
+              f"{PREFIX}ORIGINE=" not in cs.CACHE.read_text())
         key = str(win.trash_id)
         win.activate_action("win.undo", GLib.Variant.new_string(key))
+        cs.store_all = real_store_all
+        check("supprimer puis annuler ne relit pas le trousseau", not reads)
+        check("le cache shell suit la restauration",
+              f"{PREFIX}ORIGINE=" in cs.CACHE.read_text())
+        check("le cache shell reste en 0600",
+              oct(cs.CACHE.stat().st_mode & 0o777) == "0o600")
         snap = cs.store_snapshot(PREFIX + "ORIGINE")
         check("annuler restaure la valeur", snap and snap[0] == "valeur-bw")
         check("annuler conserve l'origine Bitwarden",
@@ -348,7 +359,9 @@ def test_gui(cs):
               and cs.store_get(PREFIX + "PAIRE_PASSWORD") == "motdepasse-test")
 
         # recherche au clavier
-        win.search.set_text(PREFIX + "PRIVE")
+        win.search.set_text(PREFIX)            # liste affichée : requête large
+        win.render()
+        win.search.set_text(PREFIX + "PRIVE")  # Entrée avant le « search-changed »
         win.copy_first()
         check("Entrée cible le premier résultat",
               win.results and win.results[0][1] == PREFIX + "PRIVE")

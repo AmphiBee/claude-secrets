@@ -1,5 +1,17 @@
 # Journal des versions
 
+## 1.5.1
+
+- Rapidité : enregistrer, supprimer, annuler une suppression ou importer un
+  `.env` figeait la fenêtre environ 2 s, car l'application relisait tout le
+  trousseau (700 entrées) deux fois. Elle met désormais à jour ses données en
+  mémoire et le cache du shell directement : ≈ 3 ms.
+- Sécurité : le cache du shell (`$XDG_RUNTIME_DIR/claude-secrets.env`) est créé
+  en `0600` dès l'ouverture. Avant, il restait lisible selon l'umask pendant
+  l'écriture, avant le `chmod`.
+- Corrige `Entrée` dans la recherche : tapée juste après une frappe, elle
+  copiait le premier résultat de la requête précédente.
+
 ## 1.5.0
 
 Ergonomie.
