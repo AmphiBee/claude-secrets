@@ -404,6 +404,35 @@ def test_gui(cs):
         check("affichage initial sous 1 s",
               (time.perf_counter() - started) < 1.0)
 
+        # fermer masque la fenêtre au lieu de quitter ; rouvrir est instantané
+        win.revealed.add(PREFIX + "PRIVE")
+        win.search.set_text(PREFIX)
+        win.close()
+        check("fermer masque la fenêtre", not win.get_visible())
+        check("masquer remet les valeurs affichées à zéro",
+              not win.revealed and win.search.get_text() == "")
+        check("une minuterie quitte l'application si elle reste masquée",
+              win.idle_timer != 0)
+        check("la fenêtre masquée ne contient plus aucune ligne",
+              not any(isinstance(w, Adw.ActionRow) for w in walk(win.box)))
+        time.sleep(0.5)                     # laisse passer les minuteurs de recherche
+        for _ in range(20):
+            GLib.MainContext.default().iteration(False)
+        check("rien n'est reconstruit pendant qu'elle est masquée",
+              not any(isinstance(w, Adw.ActionRow) for w in walk(win.box)))
+        app.activate()
+        check("relancer réaffiche la même fenêtre",
+              win.get_visible() and app.props.active_window is win
+              and win.idle_timer == 0)
+        for _ in range(50):
+            GLib.MainContext.default().iteration(False)
+        check("la liste revient à la réouverture",
+              any(isinstance(w, Adw.ActionRow) for w in walk(win.box)))
+        check("la réouverture ne montre pas de spinner",
+              not any(isinstance(w, Adw.StatusPage)
+                      and w.get_title() == "Lecture du trousseau…"
+                      for w in walk(win.box)))
+
         app.quit()
         return False
 

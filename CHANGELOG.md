@@ -1,5 +1,18 @@
 # Journal des versions
 
+## 1.6.0
+
+- Fermer la fenêtre (croix ou Ctrl+W) la masque au lieu de quitter. Relancer
+  l'application la réaffiche en ≈ 65 ms, liste comprise en ≈ 0,3 s, au lieu
+  des ≈ 2 s de lecture du trousseau. Le trousseau est relu en silence derrière,
+  et la liste n'est reconstruite que si quelque chose a changé.
+- Garde-fous : en se masquant, la fenêtre vide sa liste, referme les détails,
+  masque les mots de passe affichés et efface la recherche. Si elle reste
+  masquée 20 minutes, l'application quitte seule.
+- Quitter vraiment : Ctrl+Q, ou « Quitter » dans le menu principal.
+- `install.sh` arrête l'instance en cours avant de remplacer la commande, pour
+  ne pas continuer à faire tourner l'ancienne version après une mise à jour.
+
 ## 1.5.1
 
 - Rapidité : enregistrer, supprimer, annuler une suppression ou importer un

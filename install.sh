@@ -64,6 +64,12 @@ if [ -x "$BIN_DIR/claude-secrets" ]; then
   ACTION="Mise à jour depuis $ANCIENNE"
 fi
 mkdir -p "$BIN_DIR"
+# La fenêtre masquée garde l'application en mémoire : sans l'arrêter, on
+# continuerait à faire tourner l'ancienne version après la mise à jour.
+if command -v gapplication >/dev/null 2>&1 \
+   && gapplication action fr.amphibee.ClaudeSecrets quit 2>/dev/null; then
+  ok "Ancienne instance de l'application arrêtée."
+fi
 install -m 755 "$SRC" "$BIN_DIR/claude-secrets"
 ok "$ACTION → $("$BIN_DIR/claude-secrets" version)"
 
