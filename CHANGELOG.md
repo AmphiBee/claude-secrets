@@ -1,5 +1,21 @@
 # Journal des versions
 
+## 1.5.0
+
+Ergonomie.
+
+- Supprimer un secret ne demande plus de confirmation : un toast propose
+  « Annuler » pendant 8 s. La restauration conserve l'origine (Bitwarden ou
+  local). Les profils AWS gardent leur confirmation, à cause de la ligne
+  `credential_process` à retirer à la main.
+- Menu ⋯ : « Copier le nom de la variable » (`$NOM`, ou `$NOM_USER $NOM_PASSWORD`).
+- Recherche : `Entrée` copie le premier résultat, `↓` passe à la liste.
+- « Importer un .env… » : colle un fichier entier pour créer tous ses secrets
+  d'un coup (la CLI `import` partage le même analyseur).
+- Après un enregistrement ou un import, le toast rappelle que le secret est
+  disponible dans les nouveaux terminaux et copie la commande `source` pour
+  celui qui est déjà ouvert.
+
 ## 1.4.4
 
 - Corrige : l'application plantait (segfault) en ouvrant le menu d'actions

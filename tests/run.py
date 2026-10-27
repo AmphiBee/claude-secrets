@@ -247,7 +247,7 @@ def test_gui(cs):
     import gi
     gi.require_version("Gtk", "4.0")
     gi.require_version("Adw", "1")
-    from gi.repository import Gtk, Adw, GLib
+    from gi.repository import Gtk, Adw, GLib, Gdk
 
     captured = {}
     original_run = Adw.Application.run
@@ -298,8 +298,8 @@ def test_gui(cs):
 
         for action, param in (("new", None), ("setup", None), ("about", None),
                               ("shortcuts", None),
-                              ("edit", f"pair|{PREFIX}PAIRE"),
-                              ("delete", f"pair|{PREFIX}PAIRE")):
+                              ("importenv", None),
+                              ("edit", f"pair|{PREFIX}PAIRE")):
             before = len(dialogs())
             win.activate_action("win." + action,
                                 GLib.Variant.new_string(param) if param else None)
@@ -313,6 +313,64 @@ def test_gui(cs):
             b.popup()
             b.popdown()
         check("le menu d'actions d'un secret s'ouvre", bool(menu_buttons))
+
+        # suppression sans dialogue, annulable, qui conserve l'origine
+        cs.store_set(PREFIX + "ORIGINE", "valeur-bw", export=True,
+                     source="bitwarden:test")
+        win.reload()
+        for _ in range(200):          # lecture du trousseau : lente sous charge
+            if PREFIX + "ORIGINE" in {e[1] for e in win.data or []}:
+                break
+            GLib.MainContext.default().iteration(False)
+            time.sleep(0.1)
+        win.activate_action("win.delete",
+                            GLib.Variant.new_string(f"single|{PREFIX}ORIGINE"))
+        check("supprimer ne demande pas de confirmation",
+              cs.store_get(PREFIX + "ORIGINE") is None)
+        key = str(win.trash_id)
+        win.activate_action("win.undo", GLib.Variant.new_string(key))
+        snap = cs.store_snapshot(PREFIX + "ORIGINE")
+        check("annuler restaure la valeur", snap and snap[0] == "valeur-bw")
+        check("annuler conserve l'origine Bitwarden",
+              snap and snap[2] == "bitwarden:test")
+        check("annuler deux fois est sans effet",
+              win.trash.get(key) is None)
+
+        win.activate_action("win.delete",
+                            GLib.Variant.new_string(f"pair|{PREFIX}PAIRE"))
+        check("supprimer un identifiant retire les deux variables",
+              cs.store_get(PREFIX + "PAIRE_USER") is None
+              and cs.store_get(PREFIX + "PAIRE_PASSWORD") is None)
+        win.activate_action("win.undo",
+                            GLib.Variant.new_string(str(win.trash_id)))
+        check("annuler restaure l'identifiant et le mot de passe",
+              cs.store_get(PREFIX + "PAIRE_USER") == "u@x.fr"
+              and cs.store_get(PREFIX + "PAIRE_PASSWORD") == "motdepasse-test")
+
+        # recherche au clavier
+        win.search.set_text(PREFIX + "PRIVE")
+        win.copy_first()
+        check("Entrée cible le premier résultat",
+              win.results and win.results[0][1] == PREFIX + "PRIVE")
+        check("↓ passe de la recherche à la liste",
+              win.search_key(None, Gdk.KEY_Down, 0, 0) is True)
+        win.search.set_text("zz-aucun-resultat-zz")
+        win.copy_first()
+        check("Entrée sans résultat ne fait rien", win.results == [])
+        win.search.set_text(PREFIX)
+
+        # import d'un .env collé
+        win.activate_action("win.importenv")
+        dialog = dialogs()[-1]
+        view = next(w for w in walk(dialog) if isinstance(w, Gtk.TextView))
+        view.get_buffer().set_text(
+            f"# commentaire\nexport {PREFIX}ENV_A=\"a b\"\n{PREFIX}ENV_B=2\nligne invalide\n")
+        dialog.response("import")
+        check("l'import crée les secrets du .env collé",
+              cs.store_get(PREFIX + "ENV_A") == "a b"
+              and cs.store_get(PREFIX + "ENV_B") == "2")
+        for d in dialogs():
+            d.close()
 
         win.activate_action("win.edit",
                             GLib.Variant.new_string(f"single|{PREFIX}PRIVE"))
