@@ -307,6 +307,13 @@ def test_gui(cs):
             for d in dialogs():
                 d.close()
 
+        menu_buttons = [w for w in walk(win) if isinstance(w, Gtk.MenuButton)
+                        and w.get_tooltip_text() == "Plus d'actions"]
+        for b in menu_buttons[:1]:
+            b.popup()
+            b.popdown()
+        check("le menu d'actions d'un secret s'ouvre", bool(menu_buttons))
+
         win.activate_action("win.edit",
                             GLib.Variant.new_string(f"single|{PREFIX}PRIVE"))
         dialog = dialogs()[-1]

@@ -1,5 +1,11 @@
 # Journal des versions
 
+## 1.4.4
+
+- Corrige : l'application plantait (segfault) en ouvrant le menu d'actions
+  (icône ⋯) d'un secret, depuis la 1.4.1. Le menu est toujours construit à la
+  demande, mais sans se désenregistrer pendant son propre appel.
+
 ## 1.4.3
 
 - Le déverrouillage subit la même limite que la connexion sur un serveur
