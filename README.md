@@ -379,6 +379,18 @@ seules celles des secrets qui existent encore sont gardées. Elles apparaissent 
 la première synchronisation après la mise à jour ; d'ici là, le classement se
 fait sur les noms.
 
+**Forcer un groupe à la main.** Si le classement se trompe, menu ⋯ de l'entrée →
+« Changer de groupe… » (en mode « par service ») : on choisit un groupe existant
+ou on tape un nouveau nom. Le choix prime sur tout le reste, peut former un
+groupe d'une seule entrée, et fusionne avec un groupe automatique de même nom.
+Le bouton « Automatique » le retire. Les groupes entièrement choisis à la main
+portent la mention « manuel ».
+
+Les choix sont conservés dans `~/.config/claude-secrets/state.json` (clé
+`groups`) ; ceux d'entrées supprimées sont purgés. La recherche porte aussi sur
+le nom du groupe : taper « hubspot » trouve une entrée « Mon CRM » rangée dans
+ce groupe.
+
 Chaque service est une ligne dépliable dont le contenu n'est construit qu'à
 l'ouverture : l'affichage reste instantané, même avec des centaines de secrets.
 Pendant une recherche qui donne peu de résultats, les groupes s'ouvrent seuls.

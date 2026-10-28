@@ -175,6 +175,28 @@ def test_core(cs):
     check("sans adresse ni voisin → « Autres clés et accès »",
           "SEUL_SANS_ADRESSE" in groups.get("Autres clés et accès", []))
 
+    # groupe choisi à la main
+    ents = [("pair", n, "u", "p", True) for n in
+            ["MAILGUN_COM", "CANVA_COM", "GANDI_NET", "ID_GANDI_NET", "SOLO_X", "SOLO2_Y"]]
+    auto = cs.Taxonomy(ents)
+    mine = cs.Taxonomy(ents, None, {"MAILGUN_COM": "Mes outils", "CANVA_COM": "Mes outils",
+                                    "SOLO_X": "Perso", "SOLO2_Y": "Gandi",
+                                    "ID_GANDI_NET": "Autre"})
+    g = {x["label"]: x for x in mine.group(ents)}
+    names = lambda lab: [e[1] for e in g[lab]["members"]]
+    check("un choix manuel regroupe des entrées sans rapport",
+          names("Mes outils") == ["CANVA_COM", "MAILGUN_COM"] and g["Mes outils"]["manual"])
+    check("un groupe choisi peut ne contenir qu'une entrée", names("Perso") == ["SOLO_X"])
+    check("un nom de groupe existant fusionne avec lui", "SOLO2_Y" in names("Gandi"))
+    check("le choix manuel prime sur le classement automatique",
+          "ID_GANDI_NET" in names("Autre")
+          and any(e[1] == "ID_GANDI_NET" for e in auto.group(ents)[0]["members"]))
+    check("un groupe mêlant auto et manuel n'est pas dit « manuel »",
+          g["Gandi"]["manual"] is False)
+    check("le nom du groupe d'une entrée", mine.label_of("MAILGUN_COM") == "Mes outils")
+    check("sans choix, retour au classement automatique",
+          auto.label_of("MAILGUN_COM") == "")
+
     # le cache du shell est relu au lancement pour afficher la liste tout de suite
     real_cache = cs.CACHE
     cs.CACHE = pathlib.Path(tempfile.mkdtemp(prefix="cs-cache-")) / "c.env"
@@ -579,6 +601,43 @@ def test_gui(cs, tmp):
                   for w in walk(win.box)))
         win.domains = {}
         win.regroup()
+
+        # groupe choisi à la main, par le dialogue
+        cs.state_update(groups={"ZZTEST_FANTOME": "Fantôme"})
+        win.group_overrides = {"ZZTEST_FANTOME": "Fantôme"}
+        for d in dialogs():
+            d.close()
+        group_dialog = lambda: next((d for d in dialogs()
+                                     if d.get_heading() == f"Groupe de {PREFIX}PRIVE"),
+                                    None)
+        win.activate_action("win.setgroup",
+                            GLib.Variant.new_string(f"single|{PREFIX}PRIVE"))
+        check("le dialogue « changer de groupe » s'ouvre", group_dialog() is not None)
+        dialog = group_dialog()
+        next(w for w in walk(dialog) if isinstance(w, Adw.EntryRow)
+             and w.get_title() == "Nom du groupe").set_text("Clients zz")
+        dialog.response("save")
+        for d in dialogs():
+            d.close()
+        saved = cs.state_get("groups")
+        check("le groupe choisi est enregistré", saved.get(PREFIX + "PRIVE") == "Clients zz")
+        check("le choix d'une entrée disparue est purgé", "ZZTEST_FANTOME" not in saved)
+        check("l'entrée apparaît dans le groupe choisi",
+              any(isinstance(w, Adw.ExpanderRow) and w.get_title() == "Clients zz"
+                  for w in walk(win.box)))
+        win.search.set_text("clients zz")
+        win.render()
+        check("la recherche trouve aussi par nom de groupe",
+              [e[1] for e in win.results] == [PREFIX + "PRIVE"])
+        win.search.set_text("")
+        win.activate_action("win.setgroup",
+                            GLib.Variant.new_string(f"single|{PREFIX}PRIVE"))
+        dialog = group_dialog()
+        dialog.response("auto")
+        for d in dialogs():
+            d.close()
+        check("« Automatique » retire le choix manuel",
+              PREFIX + "PRIVE" not in cs.state_get("groups"))
 
         # synchronisation Bitwarden automatique (faux CLI, état isolé)
         calls = []

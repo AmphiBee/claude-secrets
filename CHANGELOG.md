@@ -1,5 +1,18 @@
 # Journal des versions
 
+## 1.10.0
+
+- Forcer le groupe d'une entrée : menu ⋯ → « Changer de groupe… » (mode « par
+  service »). On choisit un groupe existant ou on tape un nouveau nom ; le choix
+  prime sur le classement automatique, peut former un groupe d'une seule entrée
+  et fusionne avec un groupe automatique de même nom. « Automatique » le retire.
+  Les groupes entièrement manuels sont marqués « manuel ».
+- Les choix sont conservés dans l'état local (clé `groups`) ; ceux d'entrées
+  disparues sont purgés au changement suivant.
+- La recherche porte aussi sur le nom du groupe en mode « par service » : une
+  entrée « Mon CRM » classée « Hubspot » (à la main ou par son adresse web) se
+  trouve en tapant « hubspot ».
+
 ## 1.9.0
 
 - Classement par service d'après l'adresse web des éléments Bitwarden : la
