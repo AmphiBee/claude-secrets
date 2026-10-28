@@ -1,5 +1,20 @@
 # Journal des versions
 
+## 1.8.0
+
+- Regroupement par service (menu principal → « Grouper par service », mémorisé ;
+  « par type » reste disponible). Le classement est automatique et se déduit
+  des noms : on écarte l'extension, l'environnement, le préfixe de page et les
+  mots de variable, puis on retient le premier mot partagé par au moins deux
+  entrées. Les préfixes génériques inconnus sont appris sur les données. Les
+  groupes qui contiennent un environnement sont marqués « projet ».
+- Chaque service est une ligne dépliable construite à l'ouverture : l'affichage
+  est instantané, et la recherche ouvre seule les groupes quand il y a peu de
+  résultats (sans mémoriser cette ouverture).
+- Les entrées sans voisin vont dans « Autres sites » ou « Autres clés et accès ».
+- Les lignes d'un groupe reprennent la pastille du service ; un secret hors
+  environnement porte un cadenas dans tous les modes.
+
 ## 1.7.1
 
 Rapidité.

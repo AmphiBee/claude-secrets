@@ -336,6 +336,35 @@ Les tests écrivent dans le trousseau des secrets préfixés `ZZTEST_`, supprim�
 (`tests/fake-bw`) simule le coffre. La configuration de l'utilisateur est
 sauvegardée puis restaurée.
 
+## Regroupement par service
+
+La liste peut être regroupée **par service** (menu principal → « Grouper par
+service », le réglage est mémorisé) ou **par type** (clés, identifiants, AWS,
+hors environnement).
+
+Le classement est automatique et se déduit des noms : rien à configurer, et une
+nouvelle entrée est rangée toute seule. Les noms viennent le plus souvent des
+sites de Bitwarden (`APP_HUBSPOT_COM` est `app.hubspot.com`), alors on écarte ce
+qui n'identifie pas le service :
+
+- l'extension (`COM`, `FR`, `NET`…) ;
+- l'environnement (`PROD`, `PREPROD`, `LOCAL`, `DOCKER`, `DDEV`…) ;
+- le préfixe qui décrit la page (`APP`, `LOGIN`, `ID`, `WP`, `PMA`…), y compris
+  ceux que la liste ne connaît pas : un premier mot suivi de nombreux sites
+  différents est reconnu comme tel ;
+- les mots de variable (`API`, `KEY`, `TOKEN`, `PASSWORD`…), qui ne désignent
+  jamais un service.
+
+On retient alors le premier mot partagé par au moins deux entrées. Ainsi
+`MEO_FR`, `PMA_MEO_DOCKER` et `MEO_PREPROD_AMPHIBEE_FR` forment le groupe
+« Meo ». Un environnement dans le nom marque le groupe comme **projet**. Les
+entrées sans voisin tombent dans « Autres sites » (avec un nom de domaine) ou
+« Autres clés et accès ».
+
+Chaque service est une ligne dépliable dont le contenu n'est construit qu'à
+l'ouverture : l'affichage reste instantané, même avec des centaines de secrets.
+Pendant une recherche qui donne peu de résultats, les groupes s'ouvrent seuls.
+
 ## Gros coffres
 
 Avec plusieurs centaines de secrets, la lecture du trousseau prend quelques

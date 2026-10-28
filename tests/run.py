@@ -99,6 +99,41 @@ def test_core(cs):
     check("nom de profil AWS lisible",
           cs.aws_profile_label("AWS_AMPHIBEE") == "amphibee")
 
+    # classement automatique par service, d'après les noms
+    names = ["APP_HUBSPOT_COM", "LOGIN_HUBSPOT_COM",
+             "MEO_FR", "PMA_MEO_DOCKER", "MEO_PREPROD_AMPHIBEE_FR",
+             "BUNNY_API_KEY", "OPENAI_API_KEY", "X_API_KEY",
+             "MAILGUN_COM", "CANVA_COM",
+             "PASSERELLE_ALPHA_COM", "PASSERELLE_OMEGA_COM",
+             "PASSERELLE_GAMMA_COM", "PASSERELLE_DELTA_COM",
+             "GANDI_NET", "ID_GANDI_NET", "ADMIN_GANDI_NET"]
+    ents = [("pair", n, "u", "p", True) for n in names] \
+        + [("aws", "AWS_UNIQUE", "AKIA0000", "s", False)]
+    tax = cs.Taxonomy(ents)
+    groups = {g["label"]: g for g in tax.group(ents)}
+    members = lambda lab: [e[1] for e in groups[lab]["members"]]
+    check("APP_/LOGIN_ et l'extension sont écartés → un seul service",
+          members("Hubspot") == ["APP_HUBSPOT_COM", "LOGIN_HUBSPOT_COM"])
+    check("ID_/ADMIN_ et l'extension sont écartés → un seul service",
+          len(members("Gandi")) == 3)
+    check("préfixe d'outil et environnement → le projet",
+          members("Meo") == ["MEO_FR", "MEO_PREPROD_AMPHIBEE_FR", "PMA_MEO_DOCKER"])
+    check("un environnement dans le nom marque un projet",
+          groups["Meo"]["kind"] == "project" and groups["Hubspot"]["kind"] == "service")
+    check("« API » (mot de variable) n'est jamais un service", "Api" not in groups)
+    check("préfixe générique inconnu appris sur les données",
+          "Passerelle" not in groups)
+    check("une entrée isolée avec domaine → « Autres sites »",
+          {"MAILGUN_COM", "CANVA_COM"} <= set(members("Autres sites")))
+    check("une entrée isolée sans domaine → « Autres clés et accès »",
+          {"BUNNY_API_KEY", "OPENAI_API_KEY", "X_API_KEY"}
+          <= set(members("Autres clés et accès")))
+    check("un profil AWS reste dans le groupe AWS, jamais un projet",
+          "AWS_UNIQUE" in members("Aws") and groups["Aws"]["kind"] == "service")
+    check("aucun service ne compte un seul membre",
+          all(len(g["members"]) >= 2 for g in groups.values()
+              if g["kind"] in ("service", "project") and g["label"] != "Aws"))
+
     # le cache du shell est relu au lancement pour afficher la liste tout de suite
     real_cache = cs.CACHE
     cs.CACHE = pathlib.Path(tempfile.mkdtemp(prefix="cs-cache-")) / "c.env"
@@ -444,6 +479,44 @@ def test_gui(cs, tmp):
         check("affichage initial sous 1 s",
               (time.perf_counter() - started) < 1.0)
 
+        # regroupement par service
+        win.lookup_action("groupby").change_state(GLib.Variant.new_string("service"))
+        check("le mode de regroupement est mémorisé",
+              cs.state_get("group_by") == "service" and win.group_mode == "service")
+        win.search.set_text("")
+        win.render()
+        zz = next((w for w in walk(win.box) if isinstance(w, Adw.ExpanderRow)
+                   and w.get_title() == "Zztest"), None)
+        check("les secrets de test forment un service", zz is not None)
+        check("un groupe n'est construit qu'à l'ouverture", not zz.filled)
+        zz.set_expanded(True)
+        check("ouvrir un groupe liste ses entrées",
+              zz.filled and any(isinstance(w, Adw.ExpanderRow)
+                                and w.get_title() == PREFIX + "PAIRE"
+                                for w in walk(zz)))
+        check("les lignes d'un groupe reprennent la pastille du service",
+              all(a.get_text() == "Zztest"
+                  for a in walk(zz) if isinstance(a, Adw.Avatar)))
+        zz.set_expanded(False)
+        started = time.perf_counter()
+        win.render()
+        check("affichage par service sous 1 s", (time.perf_counter() - started) < 1.0)
+        win.search.set_text(PREFIX + "PRIVE")
+        win.render()
+        zz = next(w for w in walk(win.box) if isinstance(w, Adw.ExpanderRow)
+                  and w.get_title() == "Zztest")
+        check("peu de résultats : le groupe s'ouvre tout seul", zz.get_expanded())
+        win.search.set_text("")
+        win.render()
+        zz = next(w for w in walk(win.box) if isinstance(w, Adw.ExpanderRow)
+                  and w.get_title() == "Zztest")
+        check("l'ouverture automatique n'est pas mémorisée", not zz.get_expanded())
+        win.search.set_text(PREFIX + "PRIVE")
+        win.copy_first()
+        check("Entrée vise le premier résultat dans l'ordre des groupes",
+              win.results and win.results[0][1] == PREFIX + "PRIVE")
+        win.search.set_text("")
+
         # synchronisation Bitwarden automatique (faux CLI, état isolé)
         calls = []
         real_sync = cs.bw_sync
@@ -546,6 +619,7 @@ def test_gui(cs, tmp):
             return False
         return True
 
+    cs.state_update(group_by="type")    # les premières vérifications visent ce mode
     cs.refresh_cache()          # le cache est celui que lira la fenêtre au lancement
     GLib.timeout_add(100, arm)
     GLib.timeout_add_seconds(90, lambda: (print("  délai dépassé"),
