@@ -1,0 +1,27 @@
+#!/bin/bash
+# Lance Claude Secrets depuis l'AppImage. Tout vient de l'image (Python, GTK 4,
+# libadwaita, libsecret) sauf le GL et le trousseau, qui restent ceux de l'hôte.
+HERE="$(dirname "$(readlink -f "$0")")"
+LIB="$HERE/usr/lib/x86_64-linux-gnu"
+
+# Valeurs d'origine, que l'application rend aux programmes de l'hôte qu'elle lance.
+for v in LD_LIBRARY_PATH XDG_DATA_DIRS GI_TYPELIB_PATH GDK_PIXBUF_MODULE_FILE \
+         PYTHONHOME PYTHONNOUSERSITE PYTHONDONTWRITEBYTECODE; do
+  [ -n "${!v+x}" ] && export "CS_HOST_$v=${!v}"
+done
+
+export APPDIR="$HERE"
+export PYTHONHOME="$HERE/usr" PYTHONNOUSERSITE=1 PYTHONDONTWRITEBYTECODE=1
+export LD_LIBRARY_PATH="$LIB${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export GI_TYPELIB_PATH="$LIB/girepository-1.0"
+# Les modules GIO de l'hôte (dconf…) sont compilés pour SA GLib, pas celle de l'image.
+export GIO_MODULE_DIR="$LIB/gio/modules"
+export XDG_DATA_DIRS="$HERE/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+
+# Le cache des chargeurs d'images contient des chemins absolus : on le réécrit.
+RUN="${XDG_RUNTIME_DIR:-/tmp}/claude-secrets-appimage-$(id -u)"
+mkdir -p "$RUN"
+sed "s|@APPDIR@|$HERE|g" "$LIB/gdk-pixbuf-2.0/loaders.cache.in" > "$RUN/loaders.cache"
+export GDK_PIXBUF_MODULE_FILE="$RUN/loaders.cache"
+
+exec "$HERE/usr/bin/python3" "$HERE/usr/bin/claude-secrets" "$@"

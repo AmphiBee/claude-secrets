@@ -1,6 +1,6 @@
 PREFIX ?= $(HOME)/.local
 
-.PHONY: install update uninstall check test version screenshots
+.PHONY: install update uninstall check test version screenshots deb appimage packages
 
 install:
 	@./install.sh
@@ -24,3 +24,11 @@ version:
 
 screenshots:
 	@/usr/bin/python3 docs/make-screenshots.py
+
+deb:
+	@./packaging/build-deb.sh
+
+appimage:
+	@./packaging/build-appimage.sh
+
+packages: deb appimage

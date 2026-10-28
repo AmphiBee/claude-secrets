@@ -237,6 +237,64 @@ def test_core(cs):
     check("chaque teinte : fond plus clair que la bordure, plus claire que la lettre",
           all(luminance(bg) > luminance(b) > luminance(fg) for bg, b, fg in tones))
 
+    # mode d'installation : script, paquet système ou AppImage
+    saved_env = os.environ.pop("APPIMAGE", None)
+    try:
+        check("un script du dépôt est un mode « user »",
+              cs.install_kind(pathlib.Path("/home/x/depot/claude-secrets")) == "user")
+        check("~/.local/bin est un mode « user »",
+              cs.install_kind(cs.HOME / ".local/bin/claude-secrets") == "user")
+        check("/usr/bin est un mode « system » (paquet)",
+              cs.install_kind(pathlib.Path("/usr/bin/claude-secrets")) == "system")
+        check("/usr/local/bin est aussi « system »",
+              cs.install_kind(pathlib.Path("/usr/local/bin/claude-secrets")) == "system")
+        check("un paquet garde sa commande là où il l'a mise",
+              cs.bin_path("system", pathlib.Path("/usr/bin/claude-secrets"))
+              == pathlib.Path("/usr/bin/claude-secrets"))
+        check("un script est copié dans ~/.local/bin",
+              cs.bin_path("user") == cs.HOME / ".local/bin/claude-secrets")
+        os.environ["APPIMAGE"] = "/tmp/Claude_Secrets.AppImage"
+        check("sous un AppImage, on le détecte (même si __file__ est dans /tmp/.mount_)",
+              cs.install_kind(pathlib.Path("/tmp/.mount_abc/usr/bin/claude-secrets"))
+              == "appimage")
+        check("un AppImage est copié dans ~/.local/bin, jamais son script interne",
+              cs.bin_path(None, pathlib.Path("/tmp/.mount_abc/usr/bin/claude-secrets"))
+              == cs.HOME / ".local/bin/claude-secrets")
+        os.environ.pop("APPIMAGE")
+        check("~ remplace le dossier personnel", cs.tilde(cs.HOME / ".config/x") == "~/.config/x"
+              and cs.tilde("/usr/bin/x") == "/usr/bin/x")
+        # un paquet fournit lanceur et icône : detect() les cherche dans /usr
+        real = (cs.install_kind, cs.SYSTEM_DESKTOP, cs.SYSTEM_ICON)
+        tmp_pkg = pathlib.Path(tempfile.mkdtemp(prefix="cs-pkg-"))
+        try:
+            cs.install_kind = lambda here=None: "system"
+            cs.SYSTEM_DESKTOP, cs.SYSTEM_ICON = tmp_pkg / "a.desktop", tmp_pkg / "a.svg"
+            check("paquet sans lanceur ni icône : configuration incomplète",
+                  not cs.detect()["desktop"] and not cs.detect()["icon"])
+            cs.SYSTEM_DESKTOP.write_text("x")
+            cs.SYSTEM_ICON.write_text("x")
+            check("paquet : le lanceur et l'icône du système comptent",
+                  cs.detect()["desktop"] and cs.detect()["icon"])
+        finally:
+            cs.install_kind, cs.SYSTEM_DESKTOP, cs.SYSTEM_ICON = real
+            shutil.rmtree(tmp_pkg, ignore_errors=True)
+    finally:
+        if saved_env is not None:
+            os.environ["APPIMAGE"] = saved_env
+
+    # sous AppImage, les programmes de l'hôte retrouvent leur environnement
+    img = {"APPIMAGE": "/x.AppImage", "APPDIR": "/tmp/.mount_x", "PYTHONHOME": "/tmp/.mount_x/usr",
+           "LD_LIBRARY_PATH": "/tmp/.mount_x/usr/lib", "CS_HOST_LD_LIBRARY_PATH": "/opt/lib",
+           "XDG_DATA_DIRS": "/tmp/.mount_x/usr/share:/usr/share",
+           "CS_HOST_XDG_DATA_DIRS": "/usr/share", "HOME": "/h"}
+    out = cs.host_env(img)
+    check("l'AppImage rend à l'hôte son LD_LIBRARY_PATH d'origine",
+          out["LD_LIBRARY_PATH"] == "/opt/lib" and out["XDG_DATA_DIRS"] == "/usr/share")
+    check("les variables de l'image qui n'existaient pas sont retirées",
+          "PYTHONHOME" not in out and "APPDIR" not in out and out["HOME"] == "/h")
+    check("hors AppImage, l'environnement est laissé tel quel",
+          cs.host_env({"LD_LIBRARY_PATH": "/a", "HOME": "/h"}) == {"LD_LIBRARY_PATH": "/a", "HOME": "/h"})
+
     # le cache du shell est relu au lancement pour afficher la liste tout de suite
     real_cache = cs.CACHE
     cs.CACHE = pathlib.Path(tempfile.mkdtemp(prefix="cs-cache-")) / "c.env"

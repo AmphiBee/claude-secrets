@@ -65,6 +65,19 @@ cd claude-secrets
 
 Puis **ouvrez un nouveau terminal**.
 
+### Ou un paquet
+
+Sans cloner le dépôt, depuis la page des [releases](https://github.com/AmphiBee/claude-secrets/releases) :
+
+- **`.deb`** (Debian, Ubuntu 23.04+, Zorin 17…) : `sudo apt install ./claude-secrets_*_all.deb`.
+  Les dépendances sont tirées automatiquement. Lancez ensuite « Claude Secrets » : l'écran
+  d'accueil déploie la configuration dans votre dossier personnel.
+- **AppImage** (toute distribution récente) : `chmod +x Claude_Secrets-*.AppImage`, puis
+  lancez-le. Il embarque Python et GTK 4 ; au premier lancement il se copie dans
+  `~/.local/bin` et déploie sa configuration.
+
+Les paquets se construisent avec `make deb`, `make appimage` ou `make packages` (dans `dist/`).
+
 L'installateur vérifie les dépendances et propose de les installer si besoin —
 c'est la seule étape qui demande `sudo`. Tout le reste se passe dans votre
 dossier personnel.

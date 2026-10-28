@@ -1,5 +1,26 @@
 # Journal des versions
 
+## 1.12.0
+
+Paquets : un `.deb` et un AppImage.
+
+- **`.deb`** (Debian, Ubuntu 23.04+, Zorin 17…) : installe la commande, le lanceur et
+  l'icône pour tout le système. Il dépend de `gir1.2-gtk-4.0 (>= 4.10)` et de
+  `gir1.2-adw-1 (>= 1.3)`, donc il refuse de s'installer là où l'application ne
+  tournerait pas (Ubuntu 22.04 standard, Debian 12). Chaque utilisateur déploie
+  ensuite sa configuration une fois, depuis l'écran d'accueil.
+- **AppImage** : un seul fichier qui embarque Python, GTK 4, libadwaita et libsecret ;
+  rien à installer. Construit avec la glibc 2.35 : il tourne sur toute distribution
+  plus récente. Au premier lancement, il se copie dans `~/.local/bin` et déploie sa
+  configuration.
+- L'application distingue désormais trois modes d'installation (script, paquet
+  système, AppImage) : un paquet n'écrit rien dans `~/.local` à sa place, et un
+  AppImage se copie lui-même au lieu de copier son script interne. Sous AppImage, les
+  programmes de l'hôte qu'elle lance (`bw`, `update-desktop-database`…) retrouvent
+  leur propre environnement, pas les bibliothèques de l'image.
+- `make deb`, `make appimage` et `make packages` construisent les paquets dans `dist/`
+  (`packaging/`). Tests des trois modes d'installation et de l'environnement hôte.
+
 ## 1.11.0
 
 Nouvelle apparence, « papier & cuivre » (le contexte de design est dans
