@@ -99,6 +99,31 @@ def test_core(cs):
     check("nom de profil AWS lisible",
           cs.aws_profile_label("AWS_AMPHIBEE") == "amphibee")
 
+    # le cache du shell est relu au lancement pour afficher la liste tout de suite
+    real_cache = cs.CACHE
+    cs.CACHE = pathlib.Path(tempfile.mkdtemp(prefix="cs-cache-")) / "c.env"
+    try:
+        sample = [(PREFIX + "A", "simple", True),
+                  (PREFIX + "B", "espace 'quote' \"guillemets\" $x `y`", True),
+                  (PREFIX + "C", "ligne1\nligne2", True),
+                  (PREFIX + "D", "hors environnement", False)]
+        cs.write_cache(sample)
+        got = cs.read_cache()
+        check("le cache se relit à l'identique (guillemets, retours à la ligne)",
+              got == [x for x in sample if x[2]])
+        check("un secret hors environnement n'est pas dans le cache",
+              PREFIX + "D" not in {n for n, _, _ in got})
+        cs.CACHE.chmod(0o644)
+        check("un cache lisible par d'autres est refusé", cs.read_cache() == [])
+        cs.CACHE.chmod(0o600)
+        cs.CACHE.write_text("export A=1\nrm -rf /\n")
+        check("un cache altéré est refusé", cs.read_cache() == [])
+        cs.CACHE.write_text("")
+        check("un cache vide ne donne rien", cs.read_cache() == [])
+    finally:
+        shutil.rmtree(cs.CACHE.parent, ignore_errors=True)
+        cs.CACHE = real_cache
+
     # une installation ne doit pas effacer le reste de l'état local
     saved = cs.STATE.read_text() if cs.STATE.exists() else None
     try:
@@ -150,7 +175,16 @@ def _test_bitwarden(cs, tmp):
 
     session = cs.bw_login("o@exemple.fr", "bonmotdepasse")
     cs.store_set(cs.BW_SESSION_KEY, session, export=False)
+    reads = []
+    real_meta = cs.store_meta
+    cs.store_meta = lambda *a, **k: (reads.append(1), real_meta(*a, **k))[1]
     report = cs.bw_sync(folder="Claude Secrets")
+    cs.store_meta = real_meta
+    check("une synchro ne lit le trousseau qu'une fois", len(reads) == 1)
+    check("le rapport porte l'état final du trousseau",
+          PREFIX + "CLOUDFLARE" in {n for n, _, _ in report["items"]})
+    check("le cache du shell suit la synchro",
+          f"export {PREFIX}CLOUDFLARE=" in cs.CACHE.read_text())
 
     names = {n for n, _, _ in cs.store_all()}
     check("élément simple importé", PREFIX + "CLOUDFLARE" in names)
@@ -276,6 +310,7 @@ def test_gui(cs, tmp):
 
     def run_checks(app):
         win = app.props.active_window
+        check("le lancement part du cache du shell", win.preloaded)
         win.searchbar.set_key_capture_widget(None)
         win.search.set_text(PREFIX)
         win.show_all = True
@@ -463,6 +498,14 @@ def test_gui(cs, tmp):
               len(calls) == 3 and not win.syncing and len(dialogs()) == before)
         cs.bw_sync = real_sync
 
+        # une modification faite pendant une synchro ne doit pas être écrasée
+        win.commit(sets=[(PREFIX + "COURSE", "v", True)])
+        win.bw_done({"added": [PREFIX + "SYNC_NEW"], "updated": [], "removed": [],
+                     "total": 1, "items": [(PREFIX + "SYNC_NEW", "x", True)]},
+                    auto=True)
+        check("la synchro n'écrase pas une modification faite entre-temps",
+              PREFIX + "COURSE" in win.items and PREFIX + "SYNC_NEW" in win.items)
+
         # fermer masque la fenêtre au lieu de quitter ; rouvrir est instantané
         win.revealed.add(PREFIX + "PRIVE")
         win.search.set_text(PREFIX)
@@ -498,11 +541,12 @@ def test_gui(cs, tmp):
     def arm():
         app = captured.get("app")
         win = app.props.active_window if app else None
-        if win and getattr(win, "data", None) is not None:
+        if win and getattr(win, "data", None) is not None and not win.loading:
             GLib.timeout_add(300, run_checks, app)
             return False
         return True
 
+    cs.refresh_cache()          # le cache est celui que lira la fenêtre au lancement
     GLib.timeout_add(100, arm)
     GLib.timeout_add_seconds(90, lambda: (print("  délai dépassé"),
                                           captured["app"].quit())[1])

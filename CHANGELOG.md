@@ -1,5 +1,22 @@
 # Journal des versions
 
+## 1.7.1
+
+Rapidité.
+
+- Ouverture : la liste s'affiche d'abord depuis le cache du shell (en RAM,
+  `0600`, relu en ≈ 70 ms pour 700 secrets), pendant que le trousseau est relu
+  derrière ; la lecture complète apporte ensuite ce qui n'est pas exporté (AWS,
+  secrets hors environnement) et répare le cache s'il était périmé. Un cache
+  absent, lisible par d'autres, altéré ou vide est ignoré : on retombe sur la
+  lecture habituelle. Le sous-titre indique « lecture du trousseau… » tant
+  qu'elle n'est pas finie.
+- Synchronisation Bitwarden : elle relisait le trousseau trois fois (au départ,
+  pour le cache, puis pour l'interface). Elle ne le lit plus qu'une fois,
+  n'écrit le cache que si quelque chose a changé, et l'interface n'applique que
+  ce que la synchro a changé : une modification faite pendant ce temps n'est
+  plus écrasée.
+
 ## 1.7.0
 
 - Synchronisation Bitwarden automatique : au lancement, puis à la réouverture

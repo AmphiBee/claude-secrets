@@ -340,9 +340,14 @@ sauvegardée puis restaurée.
 
 Avec plusieurs centaines de secrets, la lecture du trousseau prend quelques
 secondes : chaque entrée est déchiffrée individuellement. L'application en tient
-compte — la fenêtre s'ouvre immédiatement, la lecture se fait en arrière-plan,
-la liste s'affiche par lots et la recherche travaille en mémoire sans jamais
+compte — la fenêtre s'ouvre immédiatement, la liste s'affiche d'abord depuis le
+cache du shell (déjà en RAM) pendant que le trousseau est relu en arrière-plan,
+elle s'affiche par lots et la recherche travaille en mémoire sans jamais
 relire le trousseau.
+
+Fermer la fenêtre la masque sans quitter l'application : la réouvrir est
+instantané. Elle quitte seule après 20 minutes de masquage ; `Ctrl+Q` la
+quitte tout de suite.
 
 Au-delà de 75 entrées, seules les premières sont affichées, avec un bouton
 « Tout afficher ». **La recherche porte toujours sur l'ensemble des secrets**,
