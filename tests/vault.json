@@ -20,7 +20,13 @@
    "name": "ZZTEST Cloudflare",
    "login": {
     "username": "",
-    "password": "cf-token"
+    "password": "cf-token",
+    "uris": [
+     {
+      "match": null,
+      "uri": "https://dash.cloudflare.com/login"
+     }
+    ]
    },
    "fields": []
   },
@@ -30,7 +36,17 @@
    "name": "ZZTEST Client",
    "login": {
     "username": "o@x.fr",
-    "password": "wp-pass"
+    "password": "wp-pass",
+    "uris": [
+     {
+      "match": null,
+      "uri": "androidapp://com.x"
+     },
+     {
+      "match": null,
+      "uri": "client.exemple.fr/espace"
+     }
+    ]
    },
    "fields": []
   },
@@ -56,7 +72,13 @@
    "name": "ZZTEST Stripe",
    "login": {
     "username": "",
-    "password": "sk_live"
+    "password": "sk_live",
+    "uris": [
+     {
+      "match": null,
+      "uri": "http://localhost:3000"
+     }
+    ]
    },
    "fields": [
     {

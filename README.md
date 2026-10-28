@@ -361,6 +361,24 @@ On retient alors le premier mot partagé par au moins deux entrées. Ainsi
 entrées sans voisin tombent dans « Autres sites » (avec un nom de domaine) ou
 « Autres clés et accès ».
 
+**Quand l'entrée vient de Bitwarden, l'adresse web de l'élément prime sur le
+nom.** La synchronisation retient le site (`app.hubspot.com`) de chaque élément ;
+c'est lui qui désigne le service, même si l'élément s'appelle « Mon CRM ». Deux
+garde-fous évitent les faux regroupements :
+
+- les sous-domaines d'un même service ne l'éclatent pas (`docs.google.com` et
+  `drive.google.com` restent dans « Google ») ;
+- un sous-domaine n'est un projet à part que s'il existe aussi ailleurs dans le
+  coffre : `preprod.ecranlarge.amphibee.fr` va dans « Ecranlarge », pas chez
+  l'hébergeur « Amphibee ».
+
+Les adresses locales (`localhost`, IP) et les applications mobiles sont
+ignorées. Ces adresses ne sont pas des secrets : elles sont conservées dans
+`~/.config/claude-secrets/state.json` (clé `domains`), pas dans le trousseau, et
+seules celles des secrets qui existent encore sont gardées. Elles apparaissent à
+la première synchronisation après la mise à jour ; d'ici là, le classement se
+fait sur les noms.
+
 Chaque service est une ligne dépliable dont le contenu n'est construit qu'à
 l'ouverture : l'affichage reste instantané, même avec des centaines de secrets.
 Pendant une recherche qui donne peu de résultats, les groupes s'ouvrent seuls.

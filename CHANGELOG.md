@@ -1,5 +1,21 @@
 # Journal des versions
 
+## 1.9.0
+
+- Classement par service d'après l'adresse web des éléments Bitwarden : la
+  synchronisation retient le site de chaque élément (`login.uris`), et il prime
+  sur le nom. Les adresses locales (localhost, IP) et les applications mobiles
+  sont ignorées.
+- Garde-fous : les sous-domaines d'un même service ne l'éclatent pas
+  (`docs.google.com`, `drive.google.com` → « Google »), et un sous-domaine
+  n'est un projet à part que s'il existe aussi ailleurs dans le coffre
+  (`preprod.ecranlarge.amphibee.fr` → « Ecranlarge »). Un environnement dans
+  l'adresse marque le groupe comme projet.
+- Les adresses sont conservées dans l'état local (`domains`), pas dans le
+  trousseau : ce ne sont pas des secrets, et le schéma du trousseau ne change
+  pas. Seules celles des secrets qui existent encore sont gardées. Elles
+  arrivent à la première synchronisation après la mise à jour.
+
 ## 1.8.0
 
 - Regroupement par service (menu principal → « Grouper par service », mémorisé ;

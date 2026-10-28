@@ -134,6 +134,47 @@ def test_core(cs):
           all(len(g["members"]) >= 2 for g in groups.values()
               if g["kind"] in ("service", "project") and g["label"] != "Aws"))
 
+    # classement par adresse web (Bitwarden)
+    host = lambda uri: cs.bw_host({"login": {"uris": [{"uri": uri}]}})
+    check("hôte d'une adresse complète", host("https://app.hubspot.com/login") == "app.hubspot.com")
+    check("hôte d'une adresse sans schéma, sans www",
+          host("www.exemple.fr/espace") == "exemple.fr")
+    check("application mobile, localhost et IP ignorés",
+          not any(host(u) for u in ("androidapp://com.x", "http://localhost:3000",
+                                    "http://192.168.1.2:8080", "http://site.local")))
+    check("domaine de l'hôte", cs.registrable("app.hubspot.com") == "hubspot.com")
+    check("suffixe à deux niveaux", cs.registrable("a.b.foo.co.uk") == "foo.co.uk"
+          and cs.registrable("www.impots.gouv.fr") == "impots.gouv.fr")
+
+    ents = [("pair", n, "u", "p", True) for n in
+            ["MON_CRM", "HUBSPOT_ADMIN", "DOCS", "DRIVE", "SHEETS", "MAILS",
+             "PREPROD_ECRANLARGE_AMPHIBEE_FR", "BETA_ECRANLARGE_COM",
+             "WP_AMPHIBEE_FR", "GIT_AMPHIBEE_FR", "SEUL_SANS_ADRESSE"]]
+    doms = {"MON_CRM": "app.hubspot.com", "DOCS": "docs.google.com",
+            "DRIVE": "drive.google.com", "SHEETS": "sheets.google.com",
+            "MAILS": "mail.google.com",
+            "PREPROD_ECRANLARGE_AMPHIBEE_FR": "preprod.ecranlarge.amphibee.fr",
+            "BETA_ECRANLARGE_COM": "beta.ecranlarge.com",
+            "WP_AMPHIBEE_FR": "wp.amphibee.fr", "GIT_AMPHIBEE_FR": "git.amphibee.fr"}
+    tax = cs.Taxonomy(ents, doms)
+    groups = {g["label"]: [e[1] for e in g["members"]] for g in tax.group(ents)}
+    check("l'adresse web prime sur un nom sans rapport",
+          "MON_CRM" in groups.get("Hubspot", []))
+    check("un nom qui cite le service rejoint le groupe de l'adresse",
+          "HUBSPOT_ADMIN" in groups.get("Hubspot", []))
+    check("des sous-domaines d'un même service ne l'éclatent pas",
+          len(groups.get("Google", [])) == 4)
+    check("un projet hébergé garde son groupe",
+          set(groups.get("Ecranlarge", [])) == {"PREPROD_ECRANLARGE_AMPHIBEE_FR",
+                                                "BETA_ECRANLARGE_COM"})
+    check("l'hébergeur garde ses propres sites",
+          set(groups.get("Amphibee", [])) == {"WP_AMPHIBEE_FR", "GIT_AMPHIBEE_FR"})
+    check("un environnement dans l'adresse marque un projet",
+          next(g for g in tax.group(ents) if g["label"] == "Ecranlarge")["kind"]
+          == "project")
+    check("sans adresse ni voisin → « Autres clés et accès »",
+          "SEUL_SANS_ADRESSE" in groups.get("Autres clés et accès", []))
+
     # le cache du shell est relu au lancement pour afficher la liste tout de suite
     real_cache = cs.CACHE
     cs.CACHE = pathlib.Path(tempfile.mkdtemp(prefix="cs-cache-")) / "c.env"
@@ -236,6 +277,17 @@ def _test_bitwarden(cs, tmp):
           meta[PREFIX + "CLOUDFLARE"][2] == "bitwarden:Claude Secrets")
     check("clé de session masquée", cs.BW_SESSION_KEY not in names)
 
+    doms = cs.state_get("domains", {})
+    check("la synchro retient l'adresse des éléments",
+          doms.get(PREFIX + "CLOUDFLARE") == "dash.cloudflare.com")
+    check("l'adresse vaut pour l'entrée groupée et ses deux variables",
+          doms.get(PREFIX + "CLIENT") == "client.exemple.fr"
+          and doms.get(PREFIX + "CLIENT_USER") == "client.exemple.fr")
+    check("une adresse locale n'est pas retenue", PREFIX + "STRIPE_WEBHOOK" not in doms)
+    check("la synchro signale un changement d'adresses",
+          report["domains_changed"] is True)
+    check("2e passage : adresses inchangées",
+          cs.bw_sync(folder="Claude Secrets")["domains_changed"] is False)
     check("2e passage sans changement",
           not any(cs.bw_sync(folder="Claude Secrets")[k]
                   for k in ("added", "updated", "removed")))
@@ -250,6 +302,8 @@ def _test_bitwarden(cs, tmp):
     check("avec --prune, l'élément retiré du coffre disparaît",
           cs.bw_sync(prune=True, folder="Claude Secrets")["removed"] == [PREFIX + "CLOUDFLARE"])
 
+    check("l'adresse d'un secret supprimé n'est plus conservée",
+          PREFIX + "CLOUDFLARE" not in cs.state_get("domains", {}))
     check("--prune épargne les secrets d'un autre dossier",
           PREFIX + "AUTRE_DOSSIER" in {n for n, _, _ in cs.store_all()})
     try:
@@ -516,6 +570,15 @@ def test_gui(cs, tmp):
         check("Entrée vise le premier résultat dans l'ordre des groupes",
               win.results and win.results[0][1] == PREFIX + "PRIVE")
         win.search.set_text("")
+
+        win.domains = {PREFIX + "PRIVE": "x.autrenom.io",
+                       PREFIX + "PAIRE": "y.autrenom.io"}
+        win.regroup()
+        check("l'adresse web range l'entrée dans le service de son domaine",
+              any(isinstance(w, Adw.ExpanderRow) and w.get_title() == "Autrenom"
+                  for w in walk(win.box)))
+        win.domains = {}
+        win.regroup()
 
         # synchronisation Bitwarden automatique (faux CLI, état isolé)
         calls = []
