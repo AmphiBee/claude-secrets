@@ -1,5 +1,19 @@
 # Journal des versions
 
+## 1.7.0
+
+- Synchronisation Bitwarden automatique : au lancement, puis à la réouverture
+  de la fenêtre (au plus toutes les 10 minutes), en arrière-plan. Une
+  notification n'apparaît que si quelque chose a changé.
+- Prudente par construction : elle ne demande jamais le mot de passe maître
+  (coffre verrouillé → notification « Déverrouiller »), ne supprime jamais rien
+  (pas de `--prune`), ne tourne jamais deux fois en même temps, et ne signale
+  une erreur qu'une fois par session.
+- Case « Synchroniser automatiquement » dans le menu principal (activée par
+  défaut dès qu'un compte est configuré) ; la réactiver relance une synchro.
+- Tests : la suite `gui` utilise désormais un état isolé et le faux CLI, pour
+  qu'une synchro automatique ne touche jamais au vrai compte.
+
 ## 1.6.0
 
 - Fermer la fenêtre (croix ou Ctrl+W) la masque au lieu de quitter. Relancer

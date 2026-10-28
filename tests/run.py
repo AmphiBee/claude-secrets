@@ -235,8 +235,13 @@ def _test_bitwarden(cs, tmp):
 
 # ───────────────────────────── interface ─────────────────────────────────────
 
-def test_gui(cs):
+def test_gui(cs, tmp):
     print("\nInterface")
+    # La synchro auto lit la configuration Bitwarden : on isole l'état et on
+    # route `bw` vers le faux CLI, pour ne jamais toucher à ton vrai compte.
+    cs.STATE = tmp / "state.json"
+    fake_bw_env(tmp)
+    pathlib.Path(os.environ["FAKE_BW_STATE"]).unlink(missing_ok=True)
     for var in ("GDK_PIXBUF_MODULE_FILE", "GDK_PIXBUF_MODULEDIR"):
         os.environ.pop(var, None)
     cs.store_set(PREFIX + "PRIVE", "valeur-privee-1", export=False)
@@ -404,6 +409,60 @@ def test_gui(cs):
         check("affichage initial sous 1 s",
               (time.perf_counter() - started) < 1.0)
 
+        # synchronisation Bitwarden automatique (faux CLI, état isolé)
+        calls = []
+        real_sync = cs.bw_sync
+        cs.bw_sync = lambda *a, **k: (calls.append(k), real_sync(*a, **k))[1]
+
+        def wait(cond, seconds=30):
+            end = time.time() + seconds
+            while time.time() < end and not cond():
+                GLib.MainContext.default().iteration(False)
+                time.sleep(0.02)
+            for _ in range(20):
+                GLib.MainContext.default().iteration(False)
+            return cond()
+
+        win.last_sync = 0.0
+        win.auto_sync()
+        check("sans compte Bitwarden, aucune synchro auto", not calls)
+
+        cs.bw_set_server("vault.exemple.fr")
+        cs.store_set(cs.BW_SESSION_KEY,
+                     cs.bw_login("o@exemple.fr", "bonmotdepasse"), export=False)
+        cs.bw_conf({"email": "o@exemple.fr", "folder": "Claude Secrets"})
+        win.auto_sync()
+        wait(lambda: not win.syncing and PREFIX + "CLOUDFLARE" in win.items)
+        check("la synchro auto importe le coffre", PREFIX + "CLOUDFLARE" in win.items)
+        check("la synchro auto ne supprime jamais (pas de prune)",
+              len(calls) == 1 and not calls[0].get("prune"))
+        win.auto_sync()
+        check("pas de nouvelle synchro avant l'intervalle minimal", len(calls) == 1)
+
+        toggle = win.lookup_action("autosync")
+        toggle.change_state(GLib.Variant.new_boolean(False))
+        win.last_sync = 0.0
+        win.auto_sync()
+        check("désactivée, la synchro auto ne part pas",
+              len(calls) == 1 and cs.bw_conf().get("auto_sync") is False)
+        toggle.change_state(GLib.Variant.new_boolean(True))
+        wait(lambda: len(calls) == 2 and not win.syncing)
+        check("la réactiver relance une synchro", len(calls) == 2)
+
+        win.syncing = True
+        win.auto_sync(force=True)
+        win.syncing = False
+        check("jamais deux synchros en même temps", len(calls) == 2)
+
+        cs.bw_run(["lock"])
+        win.last_sync = 0.0
+        before = len(dialogs())
+        win.auto_sync()
+        wait(lambda: len(calls) == 3 and not win.syncing)
+        check("coffre verrouillé : aucun mot de passe réclamé d'office",
+              len(calls) == 3 and not win.syncing and len(dialogs()) == before)
+        cs.bw_sync = real_sync
+
         # fermer masque la fenêtre au lieu de quitter ; rouvrir est instantané
         win.revealed.add(PREFIX + "PRIVE")
         win.search.set_text(PREFIX)
@@ -460,7 +519,7 @@ def main():
         if which in ("all", "bitwarden"):
             test_bitwarden(cs, tmp)
         if which in ("all", "gui"):
-            test_gui(cs)
+            test_gui(cs, tmp)
     finally:
         cleanup(cs)
         shutil.rmtree(tmp, ignore_errors=True)

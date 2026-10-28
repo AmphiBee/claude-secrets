@@ -158,6 +158,22 @@ d'abord par `claude-secrets bw-logout`.
 
 La synchronisation est aussi accessible depuis le menu de l'application.
 
+### Synchronisation automatique
+
+Une fois le compte configuré, l'application synchronise le dossier toute seule :
+au lancement, puis à la réouverture de la fenêtre, au plus une fois toutes les
+10 minutes. Elle travaille en arrière-plan et n'affiche une notification que si
+quelque chose a changé.
+
+Elle est volontairement prudente :
+
+- elle **ne demande jamais le mot de passe maître** d'elle-même : si le coffre
+  est verrouillé, une notification propose de le déverrouiller ;
+- elle **ne supprime jamais rien** (l'équivalent de `bw-sync` sans `--prune`) ;
+- une erreur n'est signalée qu'une fois par session.
+
+On la désactive avec la case « Synchroniser automatiquement » du menu principal.
+
 #### Serveur auto-hébergé plus ancien que le CLI
 
 Les versions récentes du CLI Bitwarden lancent, juste après l'authentification,
