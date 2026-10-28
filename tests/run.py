@@ -15,6 +15,7 @@ import importlib.util as U
 import json
 import os
 import pathlib
+import re
 import shutil
 import sys
 import tempfile
@@ -24,6 +25,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 TESTS = ROOT / "tests"
 PREFIX = "ZZTEST_"
 RESULTS = []
+AKENEO_TONE = 14   # figé : crc32 est stable, hash() ne l'est pas d'un lancement à l'autre
 
 
 def check(label, condition):
@@ -196,6 +198,44 @@ def test_core(cs):
     check("le nom du groupe d'une entrée", mine.label_of("MAILGUN_COM") == "Mes outils")
     check("sans choix, retour au classement automatique",
           auto.label_of("MAILGUN_COM") == "")
+
+    # identité visuelle : les jetons de couleur gardent un contraste AA (≥ 4,5)
+    def luminance(h):
+        c = [int(h[i:i + 2], 16) / 255 for i in (1, 3, 5)]
+        c = [x / 12.92 if x <= 0.03928 else ((x + 0.055) / 1.055) ** 2.4 for x in c]
+        return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
+
+    def contrast(a, b):
+        hi, lo = sorted((luminance(a), luminance(b)), reverse=True)
+        return (hi + 0.05) / (lo + 0.05)
+
+    for name, css in (("clair", cs.TOKENS_LIGHT), ("sombre", cs.TOKENS_DARK)):
+        t = dict(re.findall(r"@define-color (\w+) (#[0-9A-Fa-f]{6});", css))
+        pairs = [("ink", "paper"), ("ink", "surface"), ("muted", "paper"),
+                 ("muted", "surface"), ("copper_ink", "paper"),
+                 ("copper_ink", "surface"), ("on_copper", "copper")]
+        check(f"thème {name} : contraste AA sur tous les couples de couleurs",
+              all(contrast(t[a], t[b]) >= 4.5 for a, b in pairs))
+
+    # teinte des monogrammes : pastel clair, lettre foncée, bordure intermédiaire
+    check("la teinte d'un service est stable d'un lancement à l'autre",
+          cs.tone_index("Akeneo") == AKENEO_TONE)
+    check("« Mondial Relay », MONDIALRELAY et Mondial-Relay ont la même teinte",
+          len({cs.tone_index(x) for x in ("Mondial Relay", "MONDIALRELAY",
+                                          "Mondial-Relay", "mondial_relay")}) == 1)
+    check("les accents ne changent pas la teinte",
+          cs.tone_index("Électricité") == cs.tone_index("Electricite"))
+    services = ["Adexos", "Akeneo", "Alveo", "Amazon", "Amphi", "Amphibee", "Aws",
+                "Beemine", "Beewatch", "Cloudflare", "Docusign", "Ecranlarge",
+                "Gandi", "Github", "Google", "Hubspot", "Icea", "Kokomo", "Meo",
+                "Natureo", "Ovh", "Piano", "Stripe", "Zztest"]
+    check("les teintes se répartissent (pas de collisions en série)",
+          len({cs.tone_index(x) for x in services}) >= 14)
+    tones = [cs.tone_colors(i) for i in range(cs.TONES)]
+    check("chaque teinte : contraste AA lettre sur fond",
+          all(contrast(fg, bg) >= 4.5 for bg, _b, fg in tones))
+    check("chaque teinte : fond plus clair que la bordure, plus claire que la lettre",
+          all(luminance(bg) > luminance(b) > luminance(fg) for bg, b, fg in tones))
 
     # le cache du shell est relu au lancement pour afficher la liste tout de suite
     real_cache = cs.CACHE
@@ -422,6 +462,12 @@ def test_gui(cs, tmp):
     def run_checks(app):
         win = app.props.active_window
         check("le lancement part du cache du shell", win.preloaded)
+        for dark in (False, True):
+            provider, errors = Gtk.CssProvider(), []
+            provider.connect("parsing-error", lambda *a: errors.append(a))
+            provider.load_from_data(cs.theme_css(dark), -1)
+            check(f"le CSS {'sombre' if dark else 'clair'} s'analyse sans erreur",
+                  not errors)
         win.searchbar.set_key_capture_widget(None)
         win.search.set_text(PREFIX)
         win.show_all = True
@@ -564,15 +610,44 @@ def test_gui(cs, tmp):
         zz = next((w for w in walk(win.box) if isinstance(w, Adw.ExpanderRow)
                    and w.get_title() == "Zztest"), None)
         check("les secrets de test forment un service", zz is not None)
+        check("l'index est découpé par lettres",
+              any(isinstance(w, Adw.PreferencesGroup) and w.get_title() == "Z"
+                  for w in walk(win.box)))
         check("un groupe n'est construit qu'à l'ouverture", not zz.filled)
         zz.set_expanded(True)
         check("ouvrir un groupe liste ses entrées",
               zz.filled and any(isinstance(w, Adw.ExpanderRow)
                                 and w.get_title() == PREFIX + "PAIRE"
                                 for w in walk(zz)))
+        for _ in range(40):                       # laisse GTK calculer la mise en page
+            GLib.MainContext.default().iteration(False)
+            time.sleep(0.02)
+        nested = next(w for w in walk(zz) if isinstance(w, Gtk.ListBox)
+                      and w.has_css_class("nested"))
+        _, box = nested.compute_bounds(zz)
+        check("le groupe déplié est aligné sur la ligne parente, sans retrait",
+              round(box.get_x()) == 0 and round(box.get_width()) == round(zz.get_width()))
+        revealer = nested.get_parent()
+        check("aucune marge sous le groupe déplié",
+              round(revealer.get_height()) == round(nested.get_height()))
+        check("nos lignes n'usurpent pas la classe « entry » des champs d'Adwaita",
+              not any(w.has_css_class("entry") for w in walk(zz)
+                      if isinstance(w, (Adw.ActionRow, Adw.ExpanderRow)))
+              and any(w.has_css_class("secret-item") for w in walk(zz)
+                      if isinstance(w, Adw.ExpanderRow)))
         check("les lignes d'un groupe reprennent la pastille du service",
               all(a.get_text() == "Zztest"
                   for a in walk(zz) if isinstance(a, Adw.Avatar)))
+        tone = f"tone-{cs.tone_index('Zztest')}"
+        check("les lignes d'un groupe ont la même teinte que le service",
+              all(a.has_css_class(tone)
+                  for a in walk(zz) if isinstance(a, Adw.Avatar)))
+        letter = next(w for w in walk(win.box) if isinstance(w, Adw.PreferencesGroup)
+                      and w.get_title() == "Z")
+        heading = next(w for w in walk(letter) if isinstance(w, Gtk.Label)
+                       and w.has_css_class("heading"))
+        check("la lettre de section est centrée sur la colonne des monogrammes",
+              heading.get_xalign() == 0.5 and heading.get_size_request()[0] == 64)
         zz.set_expanded(False)
         started = time.perf_counter()
         win.render()

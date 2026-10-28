@@ -1,6 +1,6 @@
 PREFIX ?= $(HOME)/.local
 
-.PHONY: install update uninstall check test version
+.PHONY: install update uninstall check test version screenshots
 
 install:
 	@./install.sh
@@ -21,3 +21,6 @@ check:
 
 version:
 	@/usr/bin/python3 claude-secrets version
+
+screenshots:
+	@/usr/bin/python3 docs/make-screenshots.py

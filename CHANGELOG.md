@@ -1,5 +1,56 @@
 # Journal des versions
 
+## 1.11.0
+
+Nouvelle apparence, « papier & cuivre » (le contexte de design est dans
+`.impeccable.md`).
+
+- Identité : papier crème et encre profonde, le cuivre de l'icône employé comme un
+  tampon (action principale, projets, état). Un thème clair et un thème sombre,
+  dessinés tous deux, qui suivent le réglage du système. Les contrastes respectent
+  WCAG AA dans les deux ; un test le vérifie.
+- La liste devient un index : des filets fins au lieu de cartes, des lettres A, B,
+  C… en grand serif cuivré qui découpent les services, un compteur par service, des
+  tampons « PROJET » et « MANUEL » à la place du texte en sous-titre.
+- Un bandeau d'ouverture sous forme de phrase (« 385 secrets, rangés en 62
+  services. ») avec le sceau de l'application, à la place de la carte-métrique.
+- Coins droits sur toute la liste (lignes, en-têtes de groupe, bloc déplié, boutons
+  de ligne) : seul le monogramme reste un cercle.
+- Un groupe déplié est aligné sur sa ligne parente : plus de retrait de 12 px de
+  chaque côté ni de marge en haut et en bas (c'est vrai aussi pour le détail d'une
+  entrée). Un test mesure l'alignement dans GTK.
+- Chaque service a sa teinte, déduite de son nom : un pastel clair, la lettre dans le
+  même ton plus foncé, la bordure un cran plus claire (24 teintes, contraste AA
+  vérifié pour chacune). La teinte est stable d'un lancement à l'autre et identique
+  en mode « par service » et « par type » (« Mondial Relay », MONDIALRELAY et
+  Mondial-Relay ont la même).
+- La lettre de chaque section de l'index est centrée sur les monogrammes.
+- Typographie : titres en Gelasio (un serif classique dessiné pour l'écran, aux
+  traits francs ; repli sur Noto Serif), noms de variables en chasse
+  fixe, initiales en serif. La recherche est un champ souligné en serif.
+- Les valeurs masquées s'affichent comme un caviardage plein, à la place de points.
+- Entrée en cascade (fondu échelonné) à l'ouverture et à la réouverture de la
+  fenêtre ; elle suit la réduction des animations du système.
+- Les couleurs sont posées directement sur les éléments : la variante Yaru
+  d'Adwaita (Ubuntu, Zorin) ne laisse pas surcharger ses couleurs nommées, ce qui
+  donnait cet aspect « GTK Ubuntu ».
+- Corrections trouvées en préparant les captures :
+  - les libellés des dialogues (« Nom de la variable », « Valeur ») s'affichaient en
+    chasse fixe : ma classe `entry` entrait en collision avec celle des champs de
+    saisie d'Adwaita (renommée `secret-item`) ;
+  - « Quitter (Ctrl+Q) » affichait le raccourci en double dans le menu ;
+  - les cases et boutons radio cochés du menu restaient dans l'orange du thème au
+    lieu du cuivre.
+- README refait : logo, captures (clair et sombre), parcours de l'interface,
+  clavier, import, annulation, regroupement et mises à jour du comportement réel
+  (pagination limitée au mode « par type », fenêtre masquée, `install.sh` qui
+  arrête l'instance en cours).
+- `make screenshots` régénère les captures (`docs/make-screenshots.py`) sur un écran
+  X virtuel, avec des données fictives : ni le trousseau, ni le cache du shell, ni
+  l'état local réels ne sont lus. Le logo est versionné dans `docs/logo.svg`.
+- Tests : les deux thèmes s'analysent sans erreur CSS, contrastes AA des jetons,
+  index découpé par lettres.
+
 ## 1.10.0
 
 - Forcer le groupe d'une entrée : menu ⋯ → « Changer de groupe… » (mode « par

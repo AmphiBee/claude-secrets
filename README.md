@@ -1,7 +1,18 @@
-# Claude Secrets
+<p align="center">
+  <img src="docs/logo.svg" width="112" alt="Logo Claude Secrets : un bouclier cuivré avec une serrure">
+</p>
 
-Gérez vos clés API, tokens et mots de passe dans le trousseau chiffré de votre
-session, et laissez Claude Code les **utiliser** sans jamais les **voir**.
+<h1 align="center">Claude Secrets</h1>
+
+<p align="center">
+  Gardez vos clés API, tokens et mots de passe dans le trousseau chiffré de votre session,<br>
+  et laissez Claude Code les <b>utiliser</b> sans jamais les <b>voir</b>.
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/service-clair.png" width="49%" alt="Liste des secrets rangés par service, thème clair">
+  <img src="docs/screenshots/service-sombre.png" width="49%" alt="La même liste, thème sombre">
+</p>
 
 > Projet indépendant développé par [AmphiBee](https://amphibee.fr).
 > Non affilié à Anthropic.
@@ -37,9 +48,10 @@ le secret ». Seul le second pose problème.
   mot de passe de session
 - Installe les règles qui empêchent Claude Code d'afficher une valeur par
   accident (`echo`, `printenv`, lecture des `.env`…)
-- Interface graphique GTK 4 native, et une CLI pour les scripts
-
-![Aucune capture pour l'instant](#)
+- Une application GTK 4 native, **claire et sombre**, qui range automatiquement
+  des centaines de secrets **par service**, et une CLI pour les scripts
+- Se synchronise depuis **Bitwarden** (y compris auto-hébergé), dans un seul sens
+- Sert les identifiants **AWS** à la demande, sans polluer l'environnement
 
 ---
 
@@ -66,30 +78,171 @@ dossier personnel.
 | Arch | `python-gobject gtk4 libadwaita libsecret gnome-keyring` |
 
 Linux avec session graphique uniquement. Ne fonctionne pas en SSH sans session
-ouverte (le trousseau n'est alors pas déverrouillé).
+ouverte (le trousseau n'est alors pas déverrouillé). Testé avec GTK 4.10 et
+libadwaita 1.3.
 
 ---
 
-## Utilisation
-
-### Interface graphique
+## L'application
 
 Lancez **Claude Secrets** depuis le menu des applications, ou `claude-secrets`.
-
 Au premier lancement, l'application propose de déployer sa configuration et
 affiche exactement ce qui sera modifié.
 
-Les secrets sont rangés par section : clés et tokens, identifiants, profils AWS
-et secrets hors environnement. Les actions courantes (afficher, copier) sont
-directement sur chaque ligne ; modifier et supprimer sont dans le menu ⋮.
+### La liste, rangée par service
+
+<p align="center">
+  <img src="docs/screenshots/groupe-deplie.png" width="86%" alt="Un projet déplié : ses entrées, puis le détail d'un identifiant avec le mot de passe caviardé">
+</p>
+
+Les secrets sont **rangés automatiquement par service**, comme un index de livre :
+
+- une **lettre** (A, B, C…) ouvre chaque section ;
+- chaque service a son **monogramme coloré** — une couleur déduite du nom, la
+  même partout ;
+- le **compteur** indique combien d'entrées il contient, et un tampon
+  **PROJET** signale un projet client (préproduction, Docker, local…) ;
+- **déplier** un service montre ses entrées ; déplier une entrée de type
+  identifiant montre l'identifiant, le mot de passe et les **variables à
+  utiliser** (`$BOREALE_FR_USER`, `$BOREALE_FR_PASSWORD`). Une clé ou un token n'a
+  rien à déplier : ses actions sont directement sur sa ligne.
+
+Une valeur est toujours **masquée** : elle apparaît comme un caviardage plein.
+Sur chaque ligne : l'œil (afficher / masquer), la copie (le presse-papier est
+**vidé au bout de 45 s**) et le menu ⋮ (copier le nom de la variable, changer de
+groupe, modifier, supprimer). Un cadenas signale un secret **hors
+environnement**, jamais injecté dans le terminal.
+
+### Retrouver un secret
+
+<p align="center">
+  <img src="docs/screenshots/recherche.png" width="86%" alt="Recherche « stripe » : les groupes concernés s'ouvrent seuls">
+</p>
+
+Tapez directement, ou `Ctrl+F`. La recherche porte sur les **noms**, les
+**identifiants** et les **noms de groupe**, et travaille en mémoire. Quand il y a
+peu de résultats, les groupes s'ouvrent seuls.
+
+- `Entrée` **copie le premier résultat** ;
+- `↓` passe de la recherche à la liste ;
+- `Échap` ferme la recherche.
+
+### Ajouter, importer, supprimer
+
+<p align="center">
+  <img src="docs/screenshots/nouveau-secret.png" width="42%" alt="Dialogue « Nouveau secret »">
+</p>
+
+- **Nouveau secret** (`Ctrl+N`) : une clé ou un token, ou un identifiant + mot
+  de passe. Le dialogue montre les variables qui seront créées.
+- **Importer un .env…** (menu principal) : collez un fichier entier, l'application
+  annonce « N secrets détectés, dont M remplacés » et crée tout d'un coup.
+- **Supprimer** ne demande pas de confirmation : un bandeau propose
+  **« Annuler » pendant 8 s**, et la restauration conserve l'origine du secret
+  (local ou Bitwarden). Les profils AWS gardent leur confirmation, à cause de la
+  ligne `credential_process` à retirer à la main.
+
+Après un enregistrement, l'application rappelle que le secret est disponible dans
+les **nouveaux** terminaux, et copie en un clic la commande `source` pour celui
+qui est déjà ouvert.
+
+### Le menu principal
+
+<p align="center">
+  <img src="docs/screenshots/menu.png" width="86%" alt="Le menu principal">
+</p>
+
+Synchronisation Bitwarden (manuelle ou automatique), import d'un `.env`,
+vérification de l'installation, mode d'affichage (par service ou par type),
+raccourcis et « Quitter ».
+
+### Raccourcis
 
 | Raccourci | Action |
 |---|---|
 | `Ctrl+N` | Nouveau secret |
-| `Ctrl+F` | Rechercher (ou tapez directement) |
+| `Ctrl+F` ou taper | Rechercher |
+| `Entrée` (dans la recherche) | Copier le premier résultat |
+| `↓` (dans la recherche) | Passer à la liste |
 | `Échap` | Fermer la recherche |
+| `Ctrl+W` | Masquer la fenêtre |
+| `Ctrl+Q` | Quitter complètement |
 
-### Ligne de commande
+### Fermer, c'est masquer
+
+Fermer la fenêtre la **masque** sans quitter l'application : la rouvrir est
+instantané. En se masquant, la fenêtre vide sa liste, referme les détails,
+masque les mots de passe affichés et efface la recherche. Si elle reste masquée
+**20 minutes**, l'application quitte seule. `Ctrl+Q` (ou « Quitter » dans le
+menu) la quitte tout de suite.
+
+---
+
+## Regroupement par service
+
+La liste peut être regroupée **par service** (par défaut) ou **par type** — clés
+et tokens, identifiants, AWS, hors environnement — depuis le menu principal ; le
+choix est mémorisé.
+
+<p align="center">
+  <img src="docs/screenshots/par-type.png" width="86%" alt="Le mode d'affichage par type">
+</p>
+
+Le classement par service est **automatique** et se déduit des noms : rien à
+configurer, et une nouvelle entrée est rangée toute seule. Les noms viennent le
+plus souvent des sites de Bitwarden (`APP_HUBSPOT_COM` est `app.hubspot.com`),
+alors on écarte ce qui n'identifie pas le service :
+
+- l'extension (`COM`, `FR`, `NET`…) ;
+- l'environnement (`PROD`, `PREPROD`, `LOCAL`, `DOCKER`, `DDEV`…) ;
+- le préfixe qui décrit la page (`APP`, `LOGIN`, `ID`, `WP`, `PMA`…), y compris
+  ceux que la liste ne connaît pas : un premier mot suivi de nombreux sites
+  différents est reconnu comme tel ;
+- les mots de variable (`API`, `KEY`, `TOKEN`, `PASSWORD`…), qui ne désignent
+  jamais un service.
+
+On retient alors le premier mot partagé par au moins deux entrées. Ainsi
+`MEO_FR`, `PMA_MEO_DOCKER` et `MEO_PREPROD_AGENCE_FR` forment le groupe « Meo ».
+Un environnement dans le nom marque le groupe comme **projet**. Les entrées sans
+voisin tombent dans « Autres sites » (avec un nom de domaine) ou « Autres clés et
+accès ».
+
+**Quand l'entrée vient de Bitwarden, l'adresse web de l'élément prime sur le
+nom.** La synchronisation retient le site (`app.hubspot.com`) de chaque élément ;
+c'est lui qui désigne le service, même si l'élément s'appelle « Mon CRM ». Deux
+garde-fous évitent les faux regroupements :
+
+- les sous-domaines d'un même service ne l'éclatent pas (`docs.google.com` et
+  `drive.google.com` restent dans « Google ») ;
+- un sous-domaine n'est un projet à part que s'il existe aussi ailleurs dans le
+  coffre : `preprod.ecranlarge.agence.fr` va dans « Ecranlarge », pas chez
+  l'hébergeur « Agence ».
+
+Les adresses locales (`localhost`, IP) et les applications mobiles sont
+ignorées. Ces adresses ne sont pas des secrets : elles sont conservées dans
+`~/.config/claude-secrets/state.json` (clé `domains`), pas dans le trousseau, et
+seules celles des secrets qui existent encore sont gardées. Elles apparaissent à
+la première synchronisation après la mise à jour ; d'ici là, le classement se
+fait sur les noms.
+
+### Forcer un groupe à la main
+
+<p align="center">
+  <img src="docs/screenshots/changer-groupe.png" width="38%" alt="Dialogue « Changer de groupe »">
+</p>
+
+Si le classement se trompe : menu ⋮ de l'entrée → **« Changer de groupe… »** (en
+mode « par service »). On choisit un groupe existant ou on tape un nouveau nom. Le
+choix prime sur tout le reste, peut former un groupe d'une seule entrée, et
+fusionne avec un groupe automatique de même nom. Le bouton « Automatique » le
+retire. Les groupes entièrement choisis à la main portent le tampon **MANUEL**.
+
+Les choix sont conservés dans `~/.config/claude-secrets/state.json` (clé
+`groups`) ; ceux d'entrées supprimées sont purgés.
+
+---
+
+## Ligne de commande
 
 ```bash
 claude-secrets                      # interface graphique
@@ -97,11 +250,15 @@ claude-secrets list                 # noms des secrets (jamais les valeurs)
 claude-secrets set NOM              # ajouter une clé (saisie masquée)
 claude-secrets set-login NOM        # ajouter un identifiant + mot de passe
 claude-secrets rm NOM               # supprimer
+claude-secrets import fichier.env   # importer depuis un .env existant
 claude-secrets doctor               # vérifier l'installation
 claude-secrets version              # version installée
 claude-secrets install              # (re)déployer la configuration
-claude-secrets import fichier.env   # importer depuis un .env existant
 ```
+
+`get NOM` et `export` affichent des valeurs : ils existent pour **vous**, dans un
+terminal, et sont **bloqués pour Claude** par les règles installées. Les commandes
+`bw-*` (Bitwarden) et `aws-import` sont décrites plus bas.
 
 ### Deux types d'entrées
 
@@ -121,7 +278,22 @@ CLIENTX_WP  →  $CLIENTX_WP_USER  et  $CLIENTX_WP_PASSWORD
 curl -u "$CLIENTX_WP_USER:$CLIENTX_WP_PASSWORD" https://client-x.fr/wp-json/wp/v2/posts
 ```
 
-### Synchroniser depuis Bitwarden
+### Au quotidien avec Claude Code
+
+Demandez simplement : « utilise le token Cloudflare pour lister mes zones ».
+Claude connaît les noms disponibles via `claude-secrets list` et écrit la
+commande avec `$CLOUDFLARE_API_TOKEN`.
+
+Un secret ajouté **pendant** une session n'est pas dans l'environnement figé au
+démarrage. Claude sait recharger le cache :
+
+```bash
+source "$XDG_RUNTIME_DIR/claude-secrets.env" && <votre commande>
+```
+
+---
+
+## Synchroniser depuis Bitwarden
 
 Vos secrets peuvent venir d'un coffre Bitwarden — le service officiel comme une
 instance auto-hébergée (Vaultwarden compris). La synchronisation va **dans un
@@ -156,8 +328,6 @@ mot de passe maître : le CLI Bitwarden refuse de changer de serveur tant qu'une
 session existe. Pour basculer vers un autre serveur ou un autre compte, passez
 d'abord par `claude-secrets bw-logout`.
 
-La synchronisation est aussi accessible depuis le menu de l'application.
-
 ### Synchronisation automatique
 
 Une fois le compte configuré, l'application synchronise le dossier toute seule :
@@ -174,7 +344,7 @@ Elle est volontairement prudente :
 
 On la désactive avec la case « Synchroniser automatiquement » du menu principal.
 
-#### Serveur auto-hébergé plus ancien que le CLI
+### Serveur auto-hébergé plus ancien que le CLI
 
 Les versions récentes du CLI Bitwarden lancent, juste après l'authentification,
 une étape de migration que les serveurs auto-hébergés n'implémentent pas
@@ -182,8 +352,8 @@ toujours. La connexion réussit, puis le CLI affiche une erreur
 (`key_id_backfill`, `Encrypted Migrator`, HTTP 404) et s'arrête en échec.
 
 Claude Secrets le détecte, à la connexion comme au déverrouillage : si la
-session est bien ouverte, l'opération continue. Si vous préférez supprimer l'erreur à la source, alignez le CLI sur
-la version de votre serveur :
+session est bien ouverte, l'opération continue. Si vous préférez supprimer
+l'erreur à la source, alignez le CLI sur la version de votre serveur :
 
 ```bash
 # version du serveur :
@@ -191,7 +361,7 @@ curl -s https://vault.exemple.fr/api/config | head -c 60
 npm install -g @bitwarden/cli@2026.6.0    # la même version
 ```
 
-#### Le mot de passe maître
+### Le mot de passe maître
 
 Le CLI Bitwarden fonctionne en deux temps : la connexion, puis le
 **déverrouillage**, qui exige le mot de passe maître et renvoie une clé de
@@ -202,7 +372,7 @@ de session, chiffrée dans le trousseau, et la réutilise pour les
 synchronisations suivantes. Quand elle n'est plus valable, le mot de passe est
 redemandé. `claude-secrets bw-lock` ou `bw lock` la révoque immédiatement.
 
-#### Ce qui est importé
+### Ce qui est importé
 
 Seuls les éléments du dossier choisi sont lus. Le nom de l'élément devient le
 nom de la variable (`Cloudflare API` → `CLOUDFLARE_API`).
@@ -220,7 +390,9 @@ Deux champs personnalisés pilotent l'import :
 - `claude_secrets_export` à `false` — le secret est stocké mais **jamais**
   exposé dans l'environnement
 
-### Identifiants AWS
+---
+
+## Identifiants AWS
 
 Les clés AWS sont un cas à part : en faire des variables d'environnement
 écraserait globalement le profil par défaut et rendrait `--profile`
@@ -245,19 +417,6 @@ aws sts get-caller-identity --profile amphibee   # vérification
 Pour revenir en arrière : restaurez `credentials.disabled` et retirez les
 lignes `credential_process` de `~/.aws/config`.
 
-### Au quotidien avec Claude Code
-
-Demandez simplement : « utilise le token Cloudflare pour lister mes zones ».
-Claude connaît les noms disponibles via `claude-secrets list` et écrit la
-commande avec `$CLOUDFLARE_API_TOKEN`.
-
-Un secret ajouté **pendant** une session n'est pas dans l'environnement figé au
-démarrage. Claude sait recharger le cache :
-
-```bash
-source "$XDG_RUNTIME_DIR/claude-secrets.env" && <votre commande>
-```
-
 ---
 
 ## Mise à jour
@@ -270,9 +429,9 @@ git pull
 
 ou, équivalent : `make update`.
 
-L'installateur est idempotent : il remplace la commande, redéploie la
-configuration sans dupliquer quoi que ce soit, et affiche l'ancienne et la
-nouvelle version.
+L'installateur est idempotent : il **arrête l'instance en cours**, remplace la
+commande, redéploie la configuration sans dupliquer quoi que ce soit, et affiche
+l'ancienne et la nouvelle version.
 
 ```
 ✓ Mise à jour depuis Claude Secrets 1.0.0 → Claude Secrets 1.1.0
@@ -281,11 +440,10 @@ nouvelle version.
 **Vos secrets ne sont jamais touchés** par une mise à jour : ils vivent dans le
 trousseau, pas dans les fichiers du projet.
 
-Après une mise à jour, deux gestes :
-
-- **fermez et relancez l'application** si elle était ouverte (elle tourne sur
-  l'ancien code tant qu'elle n'est pas redémarrée) ;
-- **ouvrez un nouveau terminal** pour recharger l'environnement.
+Comme fermer la fenêtre ne quitte pas l'application, une instance restée en
+mémoire tourne sur l'ancien code. Si vous copiez la commande à la main plutôt que
+via `install.sh`, quittez d'abord l'application (`Ctrl+Q`). Puis **ouvrez un
+nouveau terminal** pour recharger l'environnement.
 
 ### Savoir si vous êtes à jour
 
@@ -322,13 +480,78 @@ L'opération est **idempotente** : la relancer ne duplique rien. Les fichiers
 existants sont sauvegardés (`.bak-<horodatage>`) et leur contenu préservé —
 le bloc est ajouté à côté, jamais à la place.
 
-## Tests
+L'application garde aussi un petit état local, **sans aucun secret**, dans
+`~/.config/claude-secrets/state.json` : configuration Bitwarden (serveur, compte,
+dossier), mode d'affichage, adresses web des éléments, groupes choisis à la main.
+
+---
+
+## Apparence
+
+L'application a sa propre identité, « papier & cuivre » : papier crème, encre
+profonde, et le cuivre de l'icône comme un tampon. Elle existe en **clair et en
+sombre** et suit le réglage de votre système. Les titres sont en serif (Gelasio,
+un serif classique dessiné pour l'écran, sinon Noto Serif) ; les noms de
+variables sont en chasse fixe ; une valeur masquée apparaît comme un caviardage.
+
+Chaque service a sa couleur, déduite de son nom : un pastel clair pour le cercle
+de l'initiale, la lettre dans le même ton plus foncé, la bordure un cran plus
+claire. Les lignes sont à angles droits, comme un index de livre.
+
+Les animations (entrée en fondu échelonné) suivent la réduction des animations
+de votre système, et les contrastes respectent WCAG AA dans les deux thèmes.
+
+## Gros coffres
+
+Avec plusieurs centaines de secrets, la lecture du trousseau prend quelques
+secondes : chaque entrée est déchiffrée individuellement. L'application en tient
+compte :
+
+- la fenêtre s'ouvre immédiatement, et la liste s'affiche d'abord depuis le cache
+  du shell (déjà en RAM) pendant que le trousseau est relu en arrière-plan ;
+- enregistrer, supprimer ou importer met à jour la mémoire et le cache sans relire
+  le trousseau ;
+- chaque service est une ligne dépliable dont le contenu n'est construit qu'à
+  l'ouverture ;
+- la recherche travaille en mémoire, sans jamais relire le trousseau ;
+- fermer la fenêtre la masque, donc la rouvrir est instantané.
+
+En mode « par type », au-delà de 75 entrées, seules les premières sont
+affichées, avec un bouton « Tout afficher ». **La recherche porte toujours sur
+l'ensemble des secrets**, affichés ou non.
+
+## Modèle de sécurité
+
+**Ce qui est protégé.** Les secrets sont chiffrés au repos par le trousseau.
+Pendant la session, un cache existe dans `$XDG_RUNTIME_DIR`, qui est un système
+de fichiers **en mémoire vive** : rien n'atteint le disque, tout disparaît à
+l'extinction. Il est créé en `0600` dès son ouverture, et l'application refuse de
+le relire s'il appartient à un autre utilisateur ou est lisible par d'autres.
+Les valeurs n'entrent jamais dans l'historique de conversation tant que les
+règles installées sont respectées.
+
+**Ce qui ne l'est pas.** Toute application lancée sous votre compte peut lire
+le trousseau une fois la session ouverte — c'est le modèle du Secret Service,
+pas une faiblesse de cet outil. Les secrets sont dans l'environnement de vos
+shells : un programme que vous lancez peut donc les lire. Cet outil protège
+contre la fuite dans les prompts et les transcriptions, pas contre un logiciel
+malveillant déjà en place. Tant qu'elle est en mémoire (fenêtre masquée
+comprise), l'application détient les valeurs ; elle les relâche après 20 minutes
+de masquage.
+
+**Si un secret a fuité** dans une conversation, révoquez-le et régénérez-le.
+C'est la seule réponse fiable.
+
+---
+
+## Développement
 
 ```bash
-make test                      # tout
+make test                                 # tout
 /usr/bin/python3 tests/run.py core        # logique et stockage
 /usr/bin/python3 tests/run.py bitwarden   # synchronisation (faux CLI, hors ligne)
 /usr/bin/python3 tests/run.py gui         # interface (session graphique requise)
+make screenshots                          # régénère les captures de ce README
 ```
 
 Les tests écrivent dans le trousseau des secrets préfixés `ZZTEST_`, supprimés
@@ -336,99 +559,20 @@ Les tests écrivent dans le trousseau des secrets préfixés `ZZTEST_`, supprim�
 (`tests/fake-bw`) simule le coffre. La configuration de l'utilisateur est
 sauvegardée puis restaurée.
 
-## Regroupement par service
+Les captures de ce README sont produites par `docs/make-screenshots.py`. Le
+script lance l'application sur un écran X virtuel (Xephyr) avec des **données
+fictives** : ni le trousseau, ni le cache du shell, ni l'état local réels ne sont
+lus, et toute écriture est interdite. Il demande `Xephyr`, `xwd`, `xwininfo` et
+Pillow (`python3-pil`).
 
-La liste peut être regroupée **par service** (menu principal → « Grouper par
-service », le réglage est mémorisé) ou **par type** (clés, identifiants, AWS,
-hors environnement).
-
-Le classement est automatique et se déduit des noms : rien à configurer, et une
-nouvelle entrée est rangée toute seule. Les noms viennent le plus souvent des
-sites de Bitwarden (`APP_HUBSPOT_COM` est `app.hubspot.com`), alors on écarte ce
-qui n'identifie pas le service :
-
-- l'extension (`COM`, `FR`, `NET`…) ;
-- l'environnement (`PROD`, `PREPROD`, `LOCAL`, `DOCKER`, `DDEV`…) ;
-- le préfixe qui décrit la page (`APP`, `LOGIN`, `ID`, `WP`, `PMA`…), y compris
-  ceux que la liste ne connaît pas : un premier mot suivi de nombreux sites
-  différents est reconnu comme tel ;
-- les mots de variable (`API`, `KEY`, `TOKEN`, `PASSWORD`…), qui ne désignent
-  jamais un service.
-
-On retient alors le premier mot partagé par au moins deux entrées. Ainsi
-`MEO_FR`, `PMA_MEO_DOCKER` et `MEO_PREPROD_AMPHIBEE_FR` forment le groupe
-« Meo ». Un environnement dans le nom marque le groupe comme **projet**. Les
-entrées sans voisin tombent dans « Autres sites » (avec un nom de domaine) ou
-« Autres clés et accès ».
-
-**Quand l'entrée vient de Bitwarden, l'adresse web de l'élément prime sur le
-nom.** La synchronisation retient le site (`app.hubspot.com`) de chaque élément ;
-c'est lui qui désigne le service, même si l'élément s'appelle « Mon CRM ». Deux
-garde-fous évitent les faux regroupements :
-
-- les sous-domaines d'un même service ne l'éclatent pas (`docs.google.com` et
-  `drive.google.com` restent dans « Google ») ;
-- un sous-domaine n'est un projet à part que s'il existe aussi ailleurs dans le
-  coffre : `preprod.ecranlarge.amphibee.fr` va dans « Ecranlarge », pas chez
-  l'hébergeur « Amphibee ».
-
-Les adresses locales (`localhost`, IP) et les applications mobiles sont
-ignorées. Ces adresses ne sont pas des secrets : elles sont conservées dans
-`~/.config/claude-secrets/state.json` (clé `domains`), pas dans le trousseau, et
-seules celles des secrets qui existent encore sont gardées. Elles apparaissent à
-la première synchronisation après la mise à jour ; d'ici là, le classement se
-fait sur les noms.
-
-**Forcer un groupe à la main.** Si le classement se trompe, menu ⋯ de l'entrée →
-« Changer de groupe… » (en mode « par service ») : on choisit un groupe existant
-ou on tape un nouveau nom. Le choix prime sur tout le reste, peut former un
-groupe d'une seule entrée, et fusionne avec un groupe automatique de même nom.
-Le bouton « Automatique » le retire. Les groupes entièrement choisis à la main
-portent la mention « manuel ».
-
-Les choix sont conservés dans `~/.config/claude-secrets/state.json` (clé
-`groups`) ; ceux d'entrées supprimées sont purgés. La recherche porte aussi sur
-le nom du groupe : taper « hubspot » trouve une entrée « Mon CRM » rangée dans
-ce groupe.
-
-Chaque service est une ligne dépliable dont le contenu n'est construit qu'à
-l'ouverture : l'affichage reste instantané, même avec des centaines de secrets.
-Pendant une recherche qui donne peu de résultats, les groupes s'ouvrent seuls.
-
-## Gros coffres
-
-Avec plusieurs centaines de secrets, la lecture du trousseau prend quelques
-secondes : chaque entrée est déchiffrée individuellement. L'application en tient
-compte — la fenêtre s'ouvre immédiatement, la liste s'affiche d'abord depuis le
-cache du shell (déjà en RAM) pendant que le trousseau est relu en arrière-plan,
-elle s'affiche par lots et la recherche travaille en mémoire sans jamais
-relire le trousseau.
-
-Fermer la fenêtre la masque sans quitter l'application : la réouvrir est
-instantané. Elle quitte seule après 20 minutes de masquage ; `Ctrl+Q` la
-quitte tout de suite.
-
-Au-delà de 75 entrées, seules les premières sont affichées, avec un bouton
-« Tout afficher ». **La recherche porte toujours sur l'ensemble des secrets**,
-affichés ou non.
-
-## Modèle de sécurité
-
-**Ce qui est protégé.** Les secrets sont chiffrés au repos par le trousseau.
-Pendant la session, un cache existe dans `$XDG_RUNTIME_DIR`, qui est un système
-de fichiers **en mémoire vive** : rien n'atteint le disque, tout disparaît à
-l'extinction. Les valeurs n'entrent jamais dans l'historique de conversation
-tant que les règles installées sont respectées.
-
-**Ce qui ne l'est pas.** Toute application lancée sous votre compte peut lire
-le trousseau une fois la session ouverte — c'est le modèle du Secret Service,
-pas une faiblesse de cet outil. Les secrets sont dans l'environnement de vos
-shells : un programme que vous lancez peut donc les lire. Cet outil protège
-contre la fuite dans les prompts et les transcriptions, pas contre un logiciel
-malveillant déjà en place.
-
-**Si un secret a fuité** dans une conversation, révoquez-le et régénérez-le.
-C'est la seule réponse fiable.
+| Dossier / fichier | Rôle |
+|---|---|
+| `claude-secrets` | l'application et la CLI, en un seul fichier |
+| `install.sh`, `uninstall.sh` | installation et désinstallation |
+| `tests/` | suites de tests et faux CLI Bitwarden |
+| `docs/` | logo, captures et script qui les génère |
+| `.impeccable.md` | contexte de design (public, personnalité, principes) |
+| `CHANGELOG.md` | journal des versions |
 
 ## Désinstallation
 

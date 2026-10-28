@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="base" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F6A974"/>
+      <stop offset="1" stop-color="#DE7650"/>
+    </linearGradient>
+    <linearGradient id="shield" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#FCE9DC"/>
+    </linearGradient>
+    <linearGradient id="hole" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#B9573A"/>
+      <stop offset="1" stop-color="#8E3E28"/>
+    </linearGradient>
+  </defs>
+  <!-- socle, avec l'épaisseur des icônes GNOME -->
+  <rect x="12" y="20" width="104" height="96" rx="24" fill="#A9472E"/>
+  <rect x="12" y="14" width="104" height="96" rx="24" fill="url(#base)"/>
+  <rect x="12.5" y="14.5" width="103" height="95" rx="23.5" fill="none" stroke="#FFFFFF" stroke-opacity=".22"/>
+  <!-- ombre portée du bouclier -->
+  <path d="M64 33 L90 42.5 V63 C90 81 78.5 93.5 64 100 C49.5 93.5 38 81 38 63 V42.5 Z" fill="#8E3E28" fill-opacity=".25" transform="translate(0 3)"/>
+  <!-- bouclier -->
+  <path d="M64 30 L90 39.5 V60 C90 78 78.5 90.5 64 97 C49.5 90.5 38 78 38 60 V39.5 Z" fill="url(#shield)"/>
+  <!-- serrure -->
+  <circle cx="64" cy="57" r="8.5" fill="url(#hole)"/>
+  <path d="M59.5 61 H68.5 L71 78 H57 Z" fill="url(#hole)"/>
+  <!-- étincelle -->
+  <path d="M95 18 C96.4 26.2 98.8 28.6 107 30 C98.8 31.4 96.4 33.8 95 42 C93.6 33.8 91.2 31.4 83 30 C91.2 28.6 93.6 26.2 95 18 Z" fill="#FFF4D2"/>
+  <circle cx="106" cy="45" r="2.6" fill="#FFF4D2" fill-opacity=".85"/>
+</svg>
