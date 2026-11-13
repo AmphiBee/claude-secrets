@@ -1,0 +1,140 @@
+{
+ "domains": {
+  "ZZTEST_CLIENT": "client.exemple.fr",
+  "ZZTEST_CLIENT_PASSWORD": "client.exemple.fr",
+  "ZZTEST_CLIENT_USER": "client.exemple.fr",
+  "ZZTEST_CLOUDFLARE": "dash.cloudflare.com"
+ },
+ "expected": {
+  "entries": [
+   [
+    "pair",
+    "ZZTEST_CLIENT",
+    "o@x.fr",
+    true
+   ],
+   [
+    "single",
+    "ZZTEST_CLOUDFLARE",
+    null,
+    true
+   ],
+   [
+    "single",
+    "ZZTEST_HORS_DOSSIER",
+    null,
+    true
+   ],
+   [
+    "single",
+    "ZZTEST_INTERNE",
+    null,
+    false
+   ],
+   [
+    "pair",
+    "ZZTEST_RENOMME",
+    "a@x.fr",
+    true
+   ],
+   [
+    "single",
+    "ZZTEST_STRIPE",
+    null,
+    true
+   ],
+   [
+    "single",
+    "ZZTEST_STRIPE_WEBHOOK",
+    null,
+    true
+   ]
+  ],
+  "groups": [
+   {
+    "id": "svc:ZZTEST",
+    "kind": "service",
+    "label": "Zztest",
+    "manual": false,
+    "members": [
+     "ZZTEST_HORS_DOSSIER",
+     "ZZTEST_INTERNE",
+     "ZZTEST_RENOMME",
+     "ZZTEST_STRIPE",
+     "ZZTEST_STRIPE_WEBHOOK"
+    ]
+   },
+   {
+    "id": "bucket:sites",
+    "kind": "sites",
+    "label": "Autres sites",
+    "manual": false,
+    "members": [
+     "ZZTEST_CLIENT",
+     "ZZTEST_CLOUDFLARE"
+    ]
+   }
+  ],
+  "labels": {
+   "ZZTEST_CLIENT": "",
+   "ZZTEST_CLOUDFLARE": "",
+   "ZZTEST_HORS_DOSSIER": "Zztest",
+   "ZZTEST_INTERNE": "Zztest",
+   "ZZTEST_RENOMME": "Zztest",
+   "ZZTEST_STRIPE": "Zztest",
+   "ZZTEST_STRIPE_WEBHOOK": "Zztest"
+  },
+  "tones": {
+   "Autres sites": 15,
+   "Zztest": 12
+  }
+ },
+ "items": [
+  {
+   "exported": true,
+   "name": "ZZTEST_CLOUDFLARE",
+   "value": "cf-token"
+  },
+  {
+   "exported": true,
+   "name": "ZZTEST_CLIENT_USER",
+   "value": "o@x.fr"
+  },
+  {
+   "exported": true,
+   "name": "ZZTEST_CLIENT_PASSWORD",
+   "value": "wp-pass"
+  },
+  {
+   "exported": true,
+   "name": "ZZTEST_RENOMME_USER",
+   "value": "a@x.fr"
+  },
+  {
+   "exported": true,
+   "name": "ZZTEST_RENOMME_PASSWORD",
+   "value": "p"
+  },
+  {
+   "exported": true,
+   "name": "ZZTEST_STRIPE",
+   "value": "sk_live"
+  },
+  {
+   "exported": true,
+   "name": "ZZTEST_STRIPE_WEBHOOK",
+   "value": "whsec"
+  },
+  {
+   "exported": false,
+   "name": "ZZTEST_INTERNE",
+   "value": "privee"
+  },
+  {
+   "exported": true,
+   "name": "ZZTEST_HORS_DOSSIER",
+   "value": "non"
+  }
+ ],
+ "overrides": {}
+}

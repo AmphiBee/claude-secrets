@@ -1,0 +1,1009 @@
+{
+ "domains": {
+  "APP_ACMEMAIL_COM": "app.acmemail.com",
+  "BETA_RIVER_FR": "beta.river.fr",
+  "DOCS_HOTEL_COM": "docs.hotel.com",
+  "DRIVE_HOTEL_COM": "drive.hotel.com",
+  "EASTWIND_COM": "eastwind.com",
+  "MY_PLANET_FR": "my.planet.fr",
+  "NORTHWIND_SHOP_FR": "shop.northwind.fr",
+  "NOVEMBER_CO_UK": "www.november.co.uk",
+  "OSCAR_GOUV_FR": "oscar.gouv.fr",
+  "PAPA_ASSO_FR": "papa.asso.fr",
+  "PREPROD_ACMEMAIL_FR": "preprod.acmemail.fr",
+  "PREPROD_WESTWIND_COM": "preprod.westwind.eastwind.com",
+  "PROD_MIKE_FR": "prod.mike.fr",
+  "SOUTHWIND_FR": "southwind.fr",
+  "SSO_ALPHA_COM": "sso.alpha.com",
+  "STAGING_MIKE_FR": "staging.mike.fr",
+  "TANGO_GITHUB_TOKEN": "github.com",
+  "WP_NORTHWIND_FR": "wp.northwind.fr",
+  "ZULU_TOKEN": "zulu",
+  "ÉTÉ_SOLEIL_FR": "été-soleil.fr"
+ },
+ "expected": {
+  "entries": [
+   [
+    "single",
+    "1PASSWORD_LIKE_TOKEN",
+    null,
+    true
+   ],
+   [
+    "single",
+    "ACMEMAIL_API_KEY",
+    null,
+    true
+   ],
+   [
+    "single",
+    "ACMEMAIL_WEBHOOK_SECRET",
+    null,
+    true
+   ],
+   [
+    "single",
+    "ALONE_KEY",
+    null,
+    true
+   ],
+   [
+    "single",
+    "APP_ACMEMAIL_COM",
+    null,
+    true
+   ],
+   [
+    "aws",
+    "AWS_ALPHAPROFILE",
+    "i-AWS_ALPHAPROFILE",
+    false
+   ],
+   [
+    "aws",
+    "AWS_BETAPROFILE",
+    "i-AWS_BETAPROFILE",
+    false
+   ],
+   [
+    "single",
+    "BETA_RIVER_FR",
+    null,
+    true
+   ],
+   [
+    "single",
+    "CLOUD_ORBIT_COM",
+    null,
+    true
+   ],
+   [
+    "single",
+    "CONSOLE_ORBIT_COM",
+    null,
+    true
+   ],
+   [
+    "single",
+    "DEV_MIKE_FR",
+    null,
+    true
+   ],
+   [
+    "single",
+    "DOCS_HOTEL_COM",
+    null,
+    true
+   ],
+   [
+    "single",
+    "DRIVE_HOTEL_COM",
+    null,
+    true
+   ],
+   [
+    "pair",
+    "EASTWIND_COM",
+    "u-EASTWIND_COM",
+    true
+   ],
+   [
+    "single",
+    "GOLF_COM_TOKEN",
+    null,
+    true
+   ],
+   [
+    "single",
+    "INDIA_JULIET_TOKEN",
+    null,
+    true
+   ],
+   [
+    "single",
+    "INDIA_KILO_TOKEN",
+    null,
+    true
+   ],
+   [
+    "pair",
+    "JUPITER_ADMIN",
+    "u-JUPITER_ADMIN",
+    true
+   ],
+   [
+    "single",
+    "LIMA_API_KEY",
+    null,
+    true
+   ],
+   [
+    "single",
+    "LOGIN_FOXTROT_COM",
+    null,
+    true
+   ],
+   [
+    "pair",
+    "LUNA_PROD",
+    "u-LUNA_PROD",
+    true
+   ],
+   [
+    "pair",
+    "LUNA_STAGING",
+    "u-LUNA_STAGING",
+    true
+   ],
+   [
+    "pair",
+    "MARS_DEV",
+    "u-MARS_DEV",
+    true
+   ],
+   [
+    "pair",
+    "MARS_PROD",
+    "u-MARS_PROD",
+    true
+   ],
+   [
+    "single",
+    "MIKE_FR",
+    null,
+    true
+   ],
+   [
+    "single",
+    "MY_PLANET_FR",
+    null,
+    true
+   ],
+   [
+    "pair",
+    "NORTHWIND_SHOP_FR",
+    "u-NORTHWIND_SHOP_FR",
+    true
+   ],
+   [
+    "single",
+    "NOVEMBER_CO_UK",
+    null,
+    true
+   ],
+   [
+    "single",
+    "ORBIT_IO",
+    null,
+    true
+   ],
+   [
+    "single",
+    "OSCAR_GOUV_FR",
+    null,
+    true
+   ],
+   [
+    "single",
+    "PAPA_ASSO_FR",
+    null,
+    true
+   ],
+   [
+    "single",
+    "PLANET_DASHBOARD_COM",
+    null,
+    true
+   ],
+   [
+    "single",
+    "PREPROD_ACMEMAIL_FR",
+    null,
+    true
+   ],
+   [
+    "pair",
+    "PREPROD_WESTWIND_COM",
+    "u-PREPROD_WESTWIND_COM",
+    true
+   ],
+   [
+    "single",
+    "PROD_MIKE_FR",
+    null,
+    true
+   ],
+   [
+    "single",
+    "QUEBEC_DB_URL",
+    null,
+    true
+   ],
+   [
+    "single",
+    "RIVER_BETA_FR",
+    null,
+    true
+   ],
+   [
+    "single",
+    "ROMEO_URL",
+    null,
+    true
+   ],
+   [
+    "single",
+    "SIERRA_ADMIN_TOKEN",
+    null,
+    true
+   ],
+   [
+    "single",
+    "SOLO_TOKEN",
+    null,
+    true
+   ],
+   [
+    "pair",
+    "SOUTHWIND_FR",
+    "u-SOUTHWIND_FR",
+    true
+   ],
+   [
+    "single",
+    "SSO_ALPHA_COM",
+    null,
+    true
+   ],
+   [
+    "single",
+    "SSO_BRAVO_COM",
+    null,
+    true
+   ],
+   [
+    "single",
+    "SSO_CHARLIE_COM",
+    null,
+    true
+   ],
+   [
+    "single",
+    "SSO_DELTA_COM",
+    null,
+    true
+   ],
+   [
+    "single",
+    "SSO_ECHO_COM",
+    null,
+    true
+   ],
+   [
+    "single",
+    "STAGING_MIKE_FR",
+    null,
+    true
+   ],
+   [
+    "single",
+    "TANGO_GITHUB_TOKEN",
+    null,
+    true
+   ],
+   [
+    "single",
+    "UNIFORM_GITHUB_TOKEN",
+    null,
+    true
+   ],
+   [
+    "single",
+    "VICTOR_GITHUB_TOKEN",
+    null,
+    true
+   ],
+   [
+    "single",
+    "WHISKEY_LOCAL_COM",
+    null,
+    true
+   ],
+   [
+    "pair",
+    "WP_NORTHWIND_FR",
+    "u-WP_NORTHWIND_FR",
+    true
+   ],
+   [
+    "single",
+    "X1PASS_SECRET",
+    null,
+    true
+   ],
+   [
+    "single",
+    "XRAY_DDEV_COM",
+    null,
+    true
+   ],
+   [
+    "single",
+    "YANKEE_RECETTE_FR",
+    null,
+    true
+   ],
+   [
+    "single",
+    "ZULU_ROOT",
+    null,
+    true
+   ],
+   [
+    "single",
+    "ZULU_TOKEN",
+    null,
+    true
+   ],
+   [
+    "single",
+    "ÉTÉ_SOLEIL_FR",
+    null,
+    true
+   ]
+  ],
+  "groups": [
+   {
+    "id": "svc:ACMEMAIL",
+    "kind": "project",
+    "label": "Acmemail",
+    "manual": false,
+    "members": [
+     "ACMEMAIL_API_KEY",
+     "ACMEMAIL_WEBHOOK_SECRET",
+     "APP_ACMEMAIL_COM",
+     "PREPROD_ACMEMAIL_FR"
+    ]
+   },
+   {
+    "id": "svc:AWS",
+    "kind": "service",
+    "label": "Aws",
+    "manual": false,
+    "members": [
+     "AWS_ALPHAPROFILE",
+     "AWS_BETAPROFILE"
+    ]
+   },
+   {
+    "id": "svc:EASTWIND",
+    "kind": "project",
+    "label": "Eastwind",
+    "manual": false,
+    "members": [
+     "EASTWIND_COM",
+     "PREPROD_WESTWIND_COM"
+    ]
+   },
+   {
+    "id": "svc:GITHUB",
+    "kind": "service",
+    "label": "Github",
+    "manual": false,
+    "members": [
+     "TANGO_GITHUB_TOKEN",
+     "UNIFORM_GITHUB_TOKEN",
+     "VICTOR_GITHUB_TOKEN"
+    ]
+   },
+   {
+    "id": "svc:HOTEL",
+    "kind": "service",
+    "label": "Hotel",
+    "manual": false,
+    "members": [
+     "DOCS_HOTEL_COM",
+     "DRIVE_HOTEL_COM"
+    ]
+   },
+   {
+    "id": "svc:INDIA",
+    "kind": "service",
+    "label": "India",
+    "manual": false,
+    "members": [
+     "INDIA_JULIET_TOKEN",
+     "INDIA_KILO_TOKEN"
+    ]
+   },
+   {
+    "id": "svc:LUNA",
+    "kind": "project",
+    "label": "Luna",
+    "manual": false,
+    "members": [
+     "LUNA_PROD",
+     "LUNA_STAGING"
+    ]
+   },
+   {
+    "id": "svc:MARS",
+    "kind": "project",
+    "label": "Mars",
+    "manual": false,
+    "members": [
+     "MARS_DEV",
+     "MARS_PROD"
+    ]
+   },
+   {
+    "id": "svc:MES OUTILS",
+    "kind": "service",
+    "label": "Mes outils",
+    "manual": true,
+    "members": [
+     "ALONE_KEY",
+     "SOLO_TOKEN"
+    ]
+   },
+   {
+    "id": "svc:MIKE",
+    "kind": "project",
+    "label": "Mike",
+    "manual": false,
+    "members": [
+     "DEV_MIKE_FR",
+     "MIKE_FR",
+     "PROD_MIKE_FR",
+     "STAGING_MIKE_FR"
+    ]
+   },
+   {
+    "id": "svc:NORTHWIND",
+    "kind": "service",
+    "label": "Northwind",
+    "manual": false,
+    "members": [
+     "NORTHWIND_SHOP_FR",
+     "WP_NORTHWIND_FR"
+    ]
+   },
+   {
+    "id": "svc:ORBIT",
+    "kind": "service",
+    "label": "Orbit",
+    "manual": false,
+    "members": [
+     "CLOUD_ORBIT_COM",
+     "CONSOLE_ORBIT_COM",
+     "ORBIT_IO"
+    ]
+   },
+   {
+    "id": "svc:PLANET",
+    "kind": "service",
+    "label": "Planet",
+    "manual": false,
+    "members": [
+     "MY_PLANET_FR",
+     "PLANET_DASHBOARD_COM"
+    ]
+   },
+   {
+    "id": "svc:RIVER",
+    "kind": "project",
+    "label": "River",
+    "manual": false,
+    "members": [
+     "BETA_RIVER_FR",
+     "RIVER_BETA_FR"
+    ]
+   },
+   {
+    "id": "svc:ZULU PERSO",
+    "kind": "service",
+    "label": "Zulu perso",
+    "manual": true,
+    "members": [
+     "ZULU_ROOT"
+    ]
+   },
+   {
+    "id": "bucket:sites",
+    "kind": "sites",
+    "label": "Autres sites",
+    "manual": false,
+    "members": [
+     "LOGIN_FOXTROT_COM",
+     "NOVEMBER_CO_UK",
+     "OSCAR_GOUV_FR",
+     "PAPA_ASSO_FR",
+     "SOUTHWIND_FR",
+     "SSO_ALPHA_COM",
+     "SSO_BRAVO_COM",
+     "SSO_CHARLIE_COM",
+     "SSO_DELTA_COM",
+     "SSO_ECHO_COM",
+     "WHISKEY_LOCAL_COM",
+     "XRAY_DDEV_COM",
+     "YANKEE_RECETTE_FR",
+     "ÉTÉ_SOLEIL_FR"
+    ]
+   },
+   {
+    "id": "bucket:acces",
+    "kind": "acces",
+    "label": "Autres clés et accès",
+    "manual": false,
+    "members": [
+     "1PASSWORD_LIKE_TOKEN",
+     "GOLF_COM_TOKEN",
+     "JUPITER_ADMIN",
+     "LIMA_API_KEY",
+     "QUEBEC_DB_URL",
+     "ROMEO_URL",
+     "SIERRA_ADMIN_TOKEN",
+     "X1PASS_SECRET",
+     "ZULU_TOKEN"
+    ]
+   }
+  ],
+  "labels": {
+   "1PASSWORD_LIKE_TOKEN": "",
+   "ACMEMAIL_API_KEY": "Acmemail",
+   "ACMEMAIL_WEBHOOK_SECRET": "Acmemail",
+   "ALONE_KEY": "Mes outils",
+   "APP_ACMEMAIL_COM": "Acmemail",
+   "AWS_ALPHAPROFILE": "Aws",
+   "AWS_BETAPROFILE": "Aws",
+   "BETA_RIVER_FR": "River",
+   "CLOUD_ORBIT_COM": "Orbit",
+   "CONSOLE_ORBIT_COM": "Orbit",
+   "DEV_MIKE_FR": "Mike",
+   "DOCS_HOTEL_COM": "Hotel",
+   "DRIVE_HOTEL_COM": "Hotel",
+   "EASTWIND_COM": "Eastwind",
+   "GOLF_COM_TOKEN": "",
+   "INDIA_JULIET_TOKEN": "India",
+   "INDIA_KILO_TOKEN": "India",
+   "JUPITER_ADMIN": "",
+   "LIMA_API_KEY": "",
+   "LOGIN_FOXTROT_COM": "",
+   "LUNA_PROD": "Luna",
+   "LUNA_STAGING": "Luna",
+   "MARS_DEV": "Mars",
+   "MARS_PROD": "Mars",
+   "MIKE_FR": "Mike",
+   "MY_PLANET_FR": "Planet",
+   "NORTHWIND_SHOP_FR": "Northwind",
+   "NOVEMBER_CO_UK": "",
+   "ORBIT_IO": "Orbit",
+   "OSCAR_GOUV_FR": "",
+   "PAPA_ASSO_FR": "",
+   "PLANET_DASHBOARD_COM": "Planet",
+   "PREPROD_ACMEMAIL_FR": "Acmemail",
+   "PREPROD_WESTWIND_COM": "Eastwind",
+   "PROD_MIKE_FR": "Mike",
+   "QUEBEC_DB_URL": "",
+   "RIVER_BETA_FR": "River",
+   "ROMEO_URL": "",
+   "SIERRA_ADMIN_TOKEN": "",
+   "SOLO_TOKEN": "Mes outils",
+   "SOUTHWIND_FR": "",
+   "SSO_ALPHA_COM": "",
+   "SSO_BRAVO_COM": "",
+   "SSO_CHARLIE_COM": "",
+   "SSO_DELTA_COM": "",
+   "SSO_ECHO_COM": "",
+   "STAGING_MIKE_FR": "Mike",
+   "TANGO_GITHUB_TOKEN": "Github",
+   "UNIFORM_GITHUB_TOKEN": "Github",
+   "VICTOR_GITHUB_TOKEN": "Github",
+   "WHISKEY_LOCAL_COM": "",
+   "WP_NORTHWIND_FR": "Northwind",
+   "X1PASS_SECRET": "",
+   "XRAY_DDEV_COM": "",
+   "YANKEE_RECETTE_FR": "",
+   "ZULU_ROOT": "Zulu perso",
+   "ZULU_TOKEN": "",
+   "ÉTÉ_SOLEIL_FR": ""
+  },
+  "tones": {
+   "Acmemail": 5,
+   "Autres clés et accès": 2,
+   "Autres sites": 15,
+   "Aws": 0,
+   "Eastwind": 1,
+   "Github": 15,
+   "Hotel": 17,
+   "India": 13,
+   "Luna": 23,
+   "Mars": 19,
+   "Mes outils": 18,
+   "Mike": 18,
+   "Northwind": 3,
+   "Orbit": 11,
+   "Planet": 19,
+   "River": 19,
+   "Zulu perso": 1
+  }
+ },
+ "items": [
+  {
+   "exported": true,
+   "name": "APP_ACMEMAIL_COM",
+   "value": "v-APP_ACMEMAIL_COM"
+  },
+  {
+   "exported": true,
+   "name": "PREPROD_ACMEMAIL_FR",
+   "value": "v-PREPROD_ACMEMAIL_FR"
+  },
+  {
+   "exported": true,
+   "name": "ACMEMAIL_API_KEY",
+   "value": "v-ACMEMAIL_API_KEY"
+  },
+  {
+   "exported": true,
+   "name": "ACMEMAIL_WEBHOOK_SECRET",
+   "value": "v-ACMEMAIL_WEBHOOK_SECRET"
+  },
+  {
+   "exported": true,
+   "name": "SSO_ALPHA_COM",
+   "value": "v-SSO_ALPHA_COM"
+  },
+  {
+   "exported": true,
+   "name": "SSO_BRAVO_COM",
+   "value": "v-SSO_BRAVO_COM"
+  },
+  {
+   "exported": true,
+   "name": "SSO_CHARLIE_COM",
+   "value": "v-SSO_CHARLIE_COM"
+  },
+  {
+   "exported": true,
+   "name": "SSO_DELTA_COM",
+   "value": "v-SSO_DELTA_COM"
+  },
+  {
+   "exported": true,
+   "name": "SSO_ECHO_COM",
+   "value": "v-SSO_ECHO_COM"
+  },
+  {
+   "exported": true,
+   "name": "LOGIN_FOXTROT_COM",
+   "value": "v-LOGIN_FOXTROT_COM"
+  },
+  {
+   "exported": true,
+   "name": "GOLF_COM_TOKEN",
+   "value": "v-GOLF_COM_TOKEN"
+  },
+  {
+   "exported": true,
+   "name": "DOCS_HOTEL_COM",
+   "value": "v-DOCS_HOTEL_COM"
+  },
+  {
+   "exported": true,
+   "name": "DRIVE_HOTEL_COM",
+   "value": "v-DRIVE_HOTEL_COM"
+  },
+  {
+   "exported": true,
+   "name": "INDIA_JULIET_TOKEN",
+   "value": "v-INDIA_JULIET_TOKEN"
+  },
+  {
+   "exported": true,
+   "name": "INDIA_KILO_TOKEN",
+   "value": "v-INDIA_KILO_TOKEN"
+  },
+  {
+   "exported": true,
+   "name": "LIMA_API_KEY",
+   "value": "v-LIMA_API_KEY"
+  },
+  {
+   "exported": true,
+   "name": "PROD_MIKE_FR",
+   "value": "v-PROD_MIKE_FR"
+  },
+  {
+   "exported": true,
+   "name": "STAGING_MIKE_FR",
+   "value": "v-STAGING_MIKE_FR"
+  },
+  {
+   "exported": true,
+   "name": "DEV_MIKE_FR",
+   "value": "v-DEV_MIKE_FR"
+  },
+  {
+   "exported": true,
+   "name": "MIKE_FR",
+   "value": "v-MIKE_FR"
+  },
+  {
+   "exported": true,
+   "name": "NOVEMBER_CO_UK",
+   "value": "v-NOVEMBER_CO_UK"
+  },
+  {
+   "exported": true,
+   "name": "OSCAR_GOUV_FR",
+   "value": "v-OSCAR_GOUV_FR"
+  },
+  {
+   "exported": true,
+   "name": "PAPA_ASSO_FR",
+   "value": "v-PAPA_ASSO_FR"
+  },
+  {
+   "exported": true,
+   "name": "QUEBEC_DB_URL",
+   "value": "v-QUEBEC_DB_URL"
+  },
+  {
+   "exported": true,
+   "name": "ROMEO_URL",
+   "value": "v-ROMEO_URL"
+  },
+  {
+   "exported": true,
+   "name": "SIERRA_ADMIN_TOKEN",
+   "value": "v-SIERRA_ADMIN_TOKEN"
+  },
+  {
+   "exported": true,
+   "name": "TANGO_GITHUB_TOKEN",
+   "value": "v-TANGO_GITHUB_TOKEN"
+  },
+  {
+   "exported": true,
+   "name": "UNIFORM_GITHUB_TOKEN",
+   "value": "v-UNIFORM_GITHUB_TOKEN"
+  },
+  {
+   "exported": true,
+   "name": "VICTOR_GITHUB_TOKEN",
+   "value": "v-VICTOR_GITHUB_TOKEN"
+  },
+  {
+   "exported": true,
+   "name": "WHISKEY_LOCAL_COM",
+   "value": "v-WHISKEY_LOCAL_COM"
+  },
+  {
+   "exported": true,
+   "name": "XRAY_DDEV_COM",
+   "value": "v-XRAY_DDEV_COM"
+  },
+  {
+   "exported": true,
+   "name": "YANKEE_RECETTE_FR",
+   "value": "v-YANKEE_RECETTE_FR"
+  },
+  {
+   "exported": true,
+   "name": "ZULU_TOKEN",
+   "value": "v-ZULU_TOKEN"
+  },
+  {
+   "exported": true,
+   "name": "ZULU_ROOT",
+   "value": "v-ZULU_ROOT"
+  },
+  {
+   "exported": true,
+   "name": "SOLO_TOKEN",
+   "value": "v-SOLO_TOKEN"
+  },
+  {
+   "exported": true,
+   "name": "ALONE_KEY",
+   "value": "v-ALONE_KEY"
+  },
+  {
+   "exported": true,
+   "name": "CLOUD_ORBIT_COM",
+   "value": "v-CLOUD_ORBIT_COM"
+  },
+  {
+   "exported": true,
+   "name": "CONSOLE_ORBIT_COM",
+   "value": "v-CONSOLE_ORBIT_COM"
+  },
+  {
+   "exported": true,
+   "name": "ORBIT_IO",
+   "value": "v-ORBIT_IO"
+  },
+  {
+   "exported": true,
+   "name": "MY_PLANET_FR",
+   "value": "v-MY_PLANET_FR"
+  },
+  {
+   "exported": true,
+   "name": "PLANET_DASHBOARD_COM",
+   "value": "v-PLANET_DASHBOARD_COM"
+  },
+  {
+   "exported": true,
+   "name": "BETA_RIVER_FR",
+   "value": "v-BETA_RIVER_FR"
+  },
+  {
+   "exported": true,
+   "name": "RIVER_BETA_FR",
+   "value": "v-RIVER_BETA_FR"
+  },
+  {
+   "exported": true,
+   "name": "1PASSWORD_LIKE_TOKEN",
+   "value": "v-1PASSWORD_LIKE_TOKEN"
+  },
+  {
+   "exported": true,
+   "name": "X1PASS_SECRET",
+   "value": "v-X1PASS_SECRET"
+  },
+  {
+   "exported": true,
+   "name": "ÉTÉ_SOLEIL_FR",
+   "value": "v-ÉTÉ_SOLEIL_FR"
+  },
+  {
+   "exported": true,
+   "name": "WP_NORTHWIND_FR_USER",
+   "value": "u-WP_NORTHWIND_FR"
+  },
+  {
+   "exported": true,
+   "name": "WP_NORTHWIND_FR_PASSWORD",
+   "value": "p-WP_NORTHWIND_FR"
+  },
+  {
+   "exported": true,
+   "name": "NORTHWIND_SHOP_FR_USER",
+   "value": "u-NORTHWIND_SHOP_FR"
+  },
+  {
+   "exported": true,
+   "name": "NORTHWIND_SHOP_FR_PASSWORD",
+   "value": "p-NORTHWIND_SHOP_FR"
+  },
+  {
+   "exported": true,
+   "name": "SOUTHWIND_FR_USER",
+   "value": "u-SOUTHWIND_FR"
+  },
+  {
+   "exported": true,
+   "name": "SOUTHWIND_FR_PASSWORD",
+   "value": "p-SOUTHWIND_FR"
+  },
+  {
+   "exported": true,
+   "name": "EASTWIND_COM_USER",
+   "value": "u-EASTWIND_COM"
+  },
+  {
+   "exported": true,
+   "name": "EASTWIND_COM_PASSWORD",
+   "value": "p-EASTWIND_COM"
+  },
+  {
+   "exported": true,
+   "name": "PREPROD_WESTWIND_COM_USER",
+   "value": "u-PREPROD_WESTWIND_COM"
+  },
+  {
+   "exported": true,
+   "name": "PREPROD_WESTWIND_COM_PASSWORD",
+   "value": "p-PREPROD_WESTWIND_COM"
+  },
+  {
+   "exported": true,
+   "name": "LUNA_STAGING_USER",
+   "value": "u-LUNA_STAGING"
+  },
+  {
+   "exported": true,
+   "name": "LUNA_STAGING_PASSWORD",
+   "value": "p-LUNA_STAGING"
+  },
+  {
+   "exported": true,
+   "name": "LUNA_PROD_USER",
+   "value": "u-LUNA_PROD"
+  },
+  {
+   "exported": true,
+   "name": "LUNA_PROD_PASSWORD",
+   "value": "p-LUNA_PROD"
+  },
+  {
+   "exported": true,
+   "name": "MARS_PROD_USER",
+   "value": "u-MARS_PROD"
+  },
+  {
+   "exported": true,
+   "name": "MARS_PROD_PASSWORD",
+   "value": "p-MARS_PROD"
+  },
+  {
+   "exported": true,
+   "name": "MARS_DEV_USER",
+   "value": "u-MARS_DEV"
+  },
+  {
+   "exported": true,
+   "name": "MARS_DEV_PASSWORD",
+   "value": "p-MARS_DEV"
+  },
+  {
+   "exported": true,
+   "name": "JUPITER_ADMIN_USER",
+   "value": "u-JUPITER_ADMIN"
+  },
+  {
+   "exported": true,
+   "name": "JUPITER_ADMIN_PASSWORD",
+   "value": "p-JUPITER_ADMIN"
+  },
+  {
+   "exported": false,
+   "name": "AWS_ALPHAPROFILE_ACCESS_KEY_ID",
+   "value": "i-AWS_ALPHAPROFILE"
+  },
+  {
+   "exported": false,
+   "name": "AWS_ALPHAPROFILE_SECRET_ACCESS_KEY",
+   "value": "s-AWS_ALPHAPROFILE"
+  },
+  {
+   "exported": false,
+   "name": "AWS_BETAPROFILE_ACCESS_KEY_ID",
+   "value": "i-AWS_BETAPROFILE"
+  },
+  {
+   "exported": false,
+   "name": "AWS_BETAPROFILE_SECRET_ACCESS_KEY",
+   "value": "s-AWS_BETAPROFILE"
+  }
+ ],
+ "overrides": {
+  "ALONE_KEY": "Mes outils",
+  "LIMA_API_KEY": "  ",
+  "SOLO_TOKEN": "Mes outils",
+  "ZULU_ROOT": "Zulu perso"
+ }
+}
