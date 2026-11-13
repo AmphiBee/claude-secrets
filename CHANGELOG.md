@@ -1,5 +1,16 @@
 # Journal des versions
 
+## 1.13.1
+
+Installation propre de l'application macOS.
+
+- `make mac-install` compile, ferme l'application en cours, la remplace dans `/Applications` (« Claude
+  Secrets.app ») et vérifie la signature ; `make mac-uninstall` la retire sans toucher au coffre.
+- `make mac-identity` crée une identité de signature locale stable (« Claude Secrets (local) ») : avec
+  elle, « Toujours autoriser » du trousseau tient d'une version à l'autre, au lieu d'être redemandé après
+  chaque compilation (signature ad hoc). Testé dans un trousseau temporaire.
+- La version de l'application est lue dans le script au lieu d'être écrite en dur.
+
 ## 1.13.0
 
 Une application native pour macOS (SwiftUI), dans `macos/`.

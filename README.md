@@ -105,16 +105,23 @@ d'écriture partagé, relecture avant chaque écriture).
 Il faut les Command Line Tools d'Apple (`xcode-select --install`), pas Xcode :
 
 ```bash
-make mac           # assemble macos/build/ClaudeSecrets.app (signature ad hoc, hardened runtime)
+make mac-install   # compile et installe « Claude Secrets.app » dans /Applications
+make mac-identity  # une fois : crée une identité de signature locale stable (voir ci-dessous)
 make mac-test      # tests du cœur et contrastes AA, sans toucher au trousseau
+make mac           # assemble seulement macos/build/ClaudeSecrets.app
+make mac-uninstall # retire l'application (le coffre et les réglages ne sont pas touchés)
 ```
 
-Copiez ensuite `ClaudeSecrets.app` dans `/Applications`. À savoir :
+`make mac-install` ferme l'application en cours, remplace la copie de `/Applications` et vérifie la
+signature ; il ne la relance pas. À savoir :
 
 - **Première lecture** : relire un coffre écrit par un autre programme (la ligne de commande) prend
   quelques secondes ; l'application ne le lit qu'une fois, puis garde tout en mémoire.
-- **Signature ad hoc** : elle change à chaque compilation, donc macOS redemande l'accès au trousseau
-  après une mise à jour (« Toujours autoriser »).
+- **Signature** : par défaut elle est ad hoc, et change à chaque compilation, donc macOS redemande l'accès
+  au trousseau après chaque mise à jour. `make mac-identity` (à lancer une fois, dans un Terminal) crée une
+  identité auto-signée « Claude Secrets (local) » dans votre trousseau de connexion ; les compilations
+  suivantes la utilisent, et « Toujours autoriser » tient d'une version à l'autre. Le certificat reste sur
+  votre Mac et ne sert qu'à signer.
 - **Réglages** (`⌘,`) : Touch ID avant d'afficher ou de copier une valeur (désactivé par défaut),
   Bitwarden, AWS. Fermer la fenêtre masque tout ; les valeurs sont relâchées de la mémoire après
   5 minutes, et l'application quitte après 20.

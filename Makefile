@@ -1,6 +1,6 @@
 PREFIX ?= $(HOME)/.local
 
-.PHONY: install update uninstall check test version screenshots deb appimage packages mac mac-test
+.PHONY: install update uninstall check test version screenshots deb appimage packages mac mac-test mac-install mac-identity mac-uninstall
 
 install:
 	@./install.sh
@@ -39,3 +39,13 @@ mac:
 
 mac-test:
 	@cd macos && swift run core-tests && python3 Tools/contrast.py
+
+# Installation propre dans /Applications ; mac-identity crée une identité de signature locale stable (une fois)
+mac-install:
+	@./macos/Tools/install-app.sh
+
+mac-identity:
+	@./macos/Tools/make-signing-identity.sh
+
+mac-uninstall:
+	@rm -rf "/Applications/Claude Secrets.app" && echo "Application retirée (le coffre et les réglages ne sont pas touchés)."
