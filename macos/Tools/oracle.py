@@ -100,3 +100,28 @@ emit("bwtests", t_items, cs.bw_domains(its), {})
 tones = ["Mondial Relay", "MONDIALRELAY", "Été", "ÉTÉ", "Zoë-Test", "ß", "", "Ça va", "Akeneo", "AWS"]
 (OUT / "tones.json").write_text(json.dumps({t: cs.tone_index(t) for t in tones}, indent=1, ensure_ascii=False,
                                            sort_keys=True) + "\n")
+
+# Écriture : cache du shell (shlex.quote) et import .env (parse_env).
+import shlex
+quotes = ["abc", "a b", "it's", "", "é✓", "a\nb", "x=y:z/w.v-u_t,s@r%q+p", "$HOME", '"d"', "a;b|c&d", "`x`", "\\", "~", "#c"]
+env_text = """# commentaire
+FOO=bar
+export BAZ="quoted value"
+QUX='single quoted'
+  SPACED = nope
+INDENTED_OK=  trimmed  
+EMPTY=
+lower=case
+1BAD=x
+EQ=a=b=c
+export  TWO_SPACES=v
+QUOTE_MID=ab"cd
+ONLYQ="
+UNI=é✓
+"""
+(OUT / "edits.json").write_text(json.dumps({
+    "quotes": {q: shlex.quote(q) for q in quotes},
+    "env_text": env_text,
+    "env_parsed": [[n, v] for n, v in cs.parse_env(env_text)],
+}, indent=1, ensure_ascii=False, sort_keys=True) + "\n")
+print("edits")

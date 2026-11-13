@@ -18,11 +18,13 @@ public struct VaultSecret: Equatable, Sendable, CustomStringConvertible, CustomD
 public enum VaultError: Error, CustomStringConvertible {
     case keychain(OSStatus)      // jamais de valeur dans un message d'erreur
     case malformed
+    case lock(Int32)
     public var description: String {
         switch self {
         case .keychain(let rc):
             return "trousseau inaccessible (code \(rc)) : ouvre une session graphique (verrouillé en SSH)"
         case .malformed: return "coffre illisible"
+        case .lock(let e): return "verrou du coffre inaccessible (errno \(e))"
         }
     }
 }
@@ -30,6 +32,10 @@ public enum VaultError: Error, CustomStringConvertible {
 /// Stockage du coffre. Derrière un protocole pour pouvoir basculer sur la CLI en repli.
 public protocol VaultStore: Sendable {
     func load() throws -> [VaultSecret]
+    /// Écriture atomique entre processus : verrou exclusif, relecture, modification, réécriture,
+    /// régénération du cache du shell. Retourne le coffre (sans les noms réservés) après modification.
+    @discardableResult
+    func transaction(_ body: (inout [VaultSecret]) throws -> Void) throws -> [VaultSecret]
 }
 
 public enum Vault {
@@ -71,21 +77,71 @@ public func codePointLess(_ a: String, _ b: String) -> Bool {
     a.utf8.lexicographicallyPrecedes(b.utf8)
 }
 
-/// Lecture de l'élément de trousseau unique (service + compte « vault »).
+/// L'élément de trousseau unique (service + compte « vault »), le même que celui de la CLI.
 public struct KeychainVaultStore: VaultStore {
     public let service: String
-    public init(service: String = Vault.service) { self.service = service }
+    public let lockURL: URL
+    public let cacheURL: URL?     // nil : pas de cache du shell (tests)
 
-    public func load() throws -> [VaultSecret] {
-        let q: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
-                                kSecAttrService as String: service,
-                                kSecAttrAccount as String: Vault.account,
-                                kSecReturnData as String: true,
-                                kSecMatchLimit as String: kSecMatchLimitOne]
+    public init(service: String = Vault.service, lockURL: URL = ShellCache.defaultLockURL,
+                cacheURL: URL? = ShellCache.defaultURL) {
+        self.service = service; self.lockURL = lockURL; self.cacheURL = cacheURL
+    }
+
+    private var base: [String: Any] {
+        [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service,
+         kSecAttrAccount as String: Vault.account]
+    }
+
+    private func readAll() throws -> [VaultSecret] {
+        var q = base
+        q[kSecReturnData as String] = true
+        q[kSecMatchLimit as String] = kSecMatchLimitOne
         var out: CFTypeRef?
         let rc = SecItemCopyMatching(q as CFDictionary, &out)
         if rc == errSecItemNotFound { return [] }
         guard rc == errSecSuccess, let data = out as? Data else { throw VaultError.keychain(rc) }
-        return try Vault.decode(data)
+        return try Vault.decode(data, includeReserved: true)
     }
+
+    private func writeAll(_ secrets: [VaultSecret]) throws {
+        let data = try Vault.encode(secrets)
+        var rc = SecItemUpdate(base as CFDictionary, [kSecValueData as String: data] as CFDictionary)
+        if rc == errSecItemNotFound {
+            var add = base; add[kSecValueData as String] = data
+            rc = SecItemAdd(add as CFDictionary, nil)
+        }
+        guard rc == errSecSuccess else { throw VaultError.keychain(rc) }
+    }
+
+    public func load() throws -> [VaultSecret] {
+        try readAll().filter { !$0.name.hasPrefix("_") }
+    }
+
+    @discardableResult
+    public func transaction(_ body: (inout [VaultSecret]) throws -> Void) throws -> [VaultSecret] {
+        let lock = try FileLock(url: lockURL)    // tenu jusqu'à la fin de la fonction
+        defer { lock.release() }
+        var all = try readAll()                  // relire APRÈS le verrou, sinon deux écrivains s'écraseraient
+        try body(&all)
+        var seen = Set<String>()
+        all = all.filter { seen.insert($0.name).inserted }   // jamais de doublon
+        try writeAll(all)
+        let visible = all.filter { !$0.name.hasPrefix("_") }.sorted { codePointLess($0.name, $1.name) }
+        if let cacheURL { try? ShellCache.write(visible, to: cacheURL) }
+        return visible
+    }
+}
+
+/// Verrou exclusif entre processus : le même fichier que la CLI (flock).
+public final class FileLock {
+    private var fd: Int32
+    public init(url: URL) throws {
+        try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        fd = open(url.path, O_WRONLY | O_CREAT, 0o600)
+        guard fd >= 0 else { throw VaultError.lock(errno) }
+        guard flock(fd, LOCK_EX) == 0 else { let e = errno; close(fd); throw VaultError.lock(e) }
+    }
+    public func release() { if fd >= 0 { flock(fd, LOCK_UN); close(fd); fd = -1 } }
+    deinit { release() }
 }

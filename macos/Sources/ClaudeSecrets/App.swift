@@ -48,7 +48,10 @@ struct ClaudeSecretsApp: App {
         }
         .defaultSize(width: 680, height: 760)
         .commands {
-            CommandGroup(replacing: .newItem) {}   // ⌘N viendra avec l'écriture (étape 2)
+            CommandGroup(replacing: .newItem) {
+                Button("Nouveau secret…") { model.sheet = .newSecret }.keyboardShortcut("n").disabled(!model.isReady)
+                Button("Importer un .env…") { model.sheet = .importEnv }.keyboardShortcut("i").disabled(!model.isReady)
+            }
         }
     }
 }

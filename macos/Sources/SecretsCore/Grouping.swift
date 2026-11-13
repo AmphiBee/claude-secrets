@@ -11,8 +11,8 @@ public struct Entry: Equatable, Sendable {
     public let exported: Bool
 }
 
-let awsIdSuffix = "_ACCESS_KEY_ID"
-let awsSecretSuffix = "_SECRET_ACCESS_KEY"
+public let awsIdSuffix = "_ACCESS_KEY_ID"
+public let awsSecretSuffix = "_SECRET_ACCESS_KEY"
 
 /// Port de `grouped()` : (nom, valeur, exporté) → entrées triées par base (tri stable).
 public func grouped(_ items: [(name: String, value: String, exported: Bool)]) -> [Entry] {

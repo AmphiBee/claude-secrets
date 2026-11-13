@@ -80,5 +80,36 @@ check("coffre illisible → erreur sans valeur", (try? Vault.decode(Data("pas du
 check("description d'un secret ne contient pas la valeur", !"\(secrets[0])".contains("ligne1") && !"\(secrets[0].debugDescription)".contains("ligne1"))
 check("noms valides", Vault.isValidName("ZZTEST_A1") && !Vault.isValidName("zz") && !Vault.isValidName("_X") && !Vault.isValidName("1A"))
 
+// MARK: écriture (opérations pures, contre l'oracle Python)
+print("Écriture : cache du shell et import .env")
+let edits = json("edits.json")
+let quotes = edits["quotes"] as! [String: String]
+check("shlex.quote identique (\(quotes.count) cas)", quotes.allSatisfy { ShellCache.quote($0.key) == $0.value })
+let wantEnv = (edits["env_parsed"] as! [[String]]).map { "\($0[0])=\($0[1])" }
+let gotEnv = VaultEdit.parseEnv(edits["env_text"] as! String).map { "\($0.name)=\($0.value)" }
+check("parse_env identique (\(wantEnv.count) lignes retenues)", gotEnv == wantEnv)
+check("cache : seuls les exportés, jamais les réservés",
+      ShellCache.render([VaultSecret(name: "ZZTEST_A", value: "a b"), VaultSecret(name: "ZZTEST_B", value: "x", exported: false),
+                         VaultSecret(name: "_BW_SESSION", value: "s")]) == "export ZZTEST_A='a b'\n")
+check("cache vide = fichier vide", ShellCache.render([]) == "")
+
+print("Édition")
+var v: [VaultSecret] = [VaultSecret(name: "ZZTEST_P_USER", value: "u", source: "bitwarden:D"),
+                        VaultSecret(name: "ZZTEST_P_PASSWORD", value: "pw", exported: false, source: "bitwarden:D"),
+                        VaultSecret(name: "ZZTEST_S", value: "s")]
+let snaps = VaultEdit.delete(&v, .pair, "ZZTEST_P")
+check("suppression d'une paire : 2 noms retirés, 2 instantanés", v.map(\.name) == ["ZZTEST_S"] && snaps.count == 2)
+VaultEdit.restore(&v, snaps)
+check("annulation : source et export conservés",
+      v.first { $0.name == "ZZTEST_P_PASSWORD" } == VaultSecret(name: "ZZTEST_P_PASSWORD", value: "pw", exported: false, source: "bitwarden:D"))
+VaultEdit.set(&v, "ZZTEST_S", "s2")
+check("set remplace sans doublon", v.filter { $0.name == "ZZTEST_S" }.count == 1 && v.first { $0.name == "ZZTEST_S" }?.value == "s2")
+VaultEdit.setLogin(&v, base: "ZZTEST_L", user: "u", password: "p")
+check("setLogin crée _USER et _PASSWORD", v.contains { $0.name == "ZZTEST_L_USER" } && v.contains { $0.name == "ZZTEST_L_PASSWORD" })
+check("normalisation du nom", VaultEdit.normalize("  mon-token api ") == "MON_TOKEN_API")
+check("noms AWS", VaultEdit.names(.aws, "AWS_X") == ["AWS_X_ACCESS_KEY_ID", "AWS_X_SECRET_ACCESS_KEY", "AWS_X_SESSION_TOKEN"])
+
+if CommandLine.arguments.contains("keychain") { runKeychainTests() }
+
 print(failures == 0 ? "\nTout est vert." : "\n\(failures) échec(s).")
 exit(failures == 0 ? 0 : 1)

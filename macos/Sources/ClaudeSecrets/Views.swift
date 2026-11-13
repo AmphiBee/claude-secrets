@@ -32,17 +32,41 @@ struct ContentView: View {
         .background(Theme.paper)
         .overlay(alignment: .bottom) {
             if let t = model.toast {
-                Text(t).font(.callout).padding(.horizontal, 14).padding(.vertical, 8)
-                    .background(Theme.ink).foregroundStyle(Theme.paper)
-                    .padding(.bottom, 16).transition(.opacity)
-                    .accessibilityAddTraits(.updatesFrequently)
+                HStack(spacing: 14) {
+                    Text(t.text).font(.callout)
+                    if let label = t.actionLabel, let key = t.actionKey {
+                        Button(label) { model.undo(key) }.buttonStyle(.plain).fontWeight(.bold)
+                            .underline().foregroundStyle(Theme.spark)
+                    }
+                }
+                .padding(.horizontal, 14).padding(.vertical, 8)
+                .background(Theme.ink).foregroundStyle(Theme.paper)
+                .padding(.bottom, 16).transition(.opacity)
+                .accessibilityElement(children: .combine)
             }
         }
         .animation(.easeOut(duration: 0.18), value: model.toast)
         .onAppear { model.load() }
+        .sheet(item: $model.sheet) { sheet in
+            switch sheet {
+            case .newSecret: SecretSheet(model: model, editing: nil)
+            case .edit(let e): SecretSheet(model: model, editing: e)
+            case .importEnv: ImportSheet(model: model)
+            case .group(let e): GroupSheet(model: model, entry: e)
+            }
+        }
+        .confirmationDialog("Supprimer ce profil AWS ?", isPresented: Binding(
+            get: { model.confirmAWS != nil }, set: { if !$0 { model.confirmAWS = nil } }), titleVisibility: .visible) {
+            Button("Supprimer", role: .destructive) { if let e = model.confirmAWS { model.delete(e) } }
+            Button("Annuler", role: .cancel) { model.confirmAWS = nil }
+        } message: {
+            Text("Les clés seront retirées du trousseau. Pense à retirer aussi la ligne credential_process de ~/.aws/config.")
+        }
         .background(Button("") { searchFocused = true }.keyboardShortcut("f").opacity(0).accessibilityHidden(true))
     }
 }
+
+extension VaultModel { var isReady: Bool { if case .ready = phase { return true } else { return false } } }
 
 struct Header: View {
     @ObservedObject var model: VaultModel
@@ -54,6 +78,8 @@ struct Header: View {
                 Seal()
                 Text("Claude Secrets").font(Theme.title(22)).foregroundStyle(Theme.ink)
                 Spacer()
+                Button { model.sheet = .newSecret } label: { Label("Nouveau", systemImage: "plus") }
+                    .help("Nouveau secret (⌘N)").disabled(!model.isReady)
                 Picker("Classement", selection: $model.mode) {
                     Text("Par service").tag(GroupMode.service)
                     Text("Par type").tag(GroupMode.type)
@@ -216,8 +242,137 @@ struct EntryRow: View {
             }
             Button { model.copy(entry) } label: { Image(systemName: "doc.on.doc") }
                 .help("Copier (effacé après 45 s)").accessibilityLabel("Copier la valeur")
+            Menu {
+                if entry.kind != .aws { Button("Modifier…") { model.sheet = .edit(entry) } }
+                if model.mode == .service { Button("Changer de groupe…") { model.sheet = .group(entry) } }
+                Divider()
+                Button("Supprimer", role: .destructive) { model.delete(entry) }
+            } label: { Image(systemName: "ellipsis.circle") }
+                .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+                .help("Plus d'actions").accessibilityLabel("Plus d'actions")
         }
         .buttonStyle(.borderless).foregroundStyle(Theme.copper)
         .padding(.vertical, 5).padding(.trailing, 16)
+    }
+}
+
+
+// MARK: - Fenêtres de saisie
+
+struct SheetFrame<Content: View>: View {
+    let title: String, confirm: String
+    var enabled = true
+    let onConfirm: () -> Void
+    let onCancel: () -> Void
+    @ViewBuilder var content: Content
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text(title).font(Theme.title(20)).foregroundStyle(Theme.ink)
+            content
+            HStack {
+                Spacer()
+                Button("Annuler", action: onCancel).keyboardShortcut(.cancelAction)
+                Button(confirm, action: onConfirm).keyboardShortcut(.defaultAction).disabled(!enabled)
+                    .tint(Theme.copper)
+            }
+        }
+        .padding(20).frame(width: 440).background(Theme.paper)
+    }
+}
+
+struct SecretSheet: View {
+    @ObservedObject var model: VaultModel
+    let editing: Entry?
+    final class Form: ObservableObject {
+        @Published var pair = false
+        @Published var name = ""
+        @Published var user = ""
+        @Published var value = ""
+        @Published var error: String?
+    }
+    @StateObject private var f = Form()
+
+    private var normalized: String { VaultEdit.normalize(f.name) }
+    private var replaces: Bool { editing == nil && !normalized.isEmpty && model.existingNames.contains(normalized + (f.pair ? "_USER" : "")) }
+
+    var body: some View {
+        SheetFrame(title: editing == nil ? "Nouveau secret" : "Modifier \(editing!.base)",
+                   confirm: "Enregistrer", onConfirm: submit, onCancel: { model.sheet = nil }) {
+            if editing == nil {
+                Picker("Type", selection: $f.pair) {
+                    Text("Clé ou token").tag(false)
+                    Text("Identifiant + mot de passe").tag(true)
+                }.pickerStyle(.segmented).labelsHidden()
+                TextField("Nom (ex. MON_SERVICE_API_KEY)", text: $f.name).textFieldStyle(.roundedBorder)
+                if !normalized.isEmpty {
+                    Text(f.pair ? "Variables : \(normalized)_USER et \(normalized)_PASSWORD" : "Variable : \(normalized)")
+                        .font(.caption).foregroundStyle(Theme.inkSoft)
+                }
+                if replaces { Text("Ce nom existe déjà : sa valeur sera remplacée.").font(.caption).foregroundStyle(Theme.copper) }
+            }
+            if f.pair { TextField("Identifiant", text: $f.user).textFieldStyle(.roundedBorder) }
+            SecureField(f.pair ? "Mot de passe" : "Valeur", text: $f.value).textFieldStyle(.roundedBorder)
+            if let error = f.error { Label(error, systemImage: "exclamationmark.triangle").font(.caption).foregroundStyle(Theme.copper) }
+        }
+        .onAppear {
+            if let e = editing { f.pair = e.kind == .pair; f.user = e.user ?? ""; f.value = e.value }
+        }
+    }
+
+    private func submit() {
+        f.error = model.save(pair: f.pair, rawName: f.name, user: f.user, value: f.value, editing: editing)
+    }
+}
+
+struct ImportSheet: View {
+    @ObservedObject var model: VaultModel
+    final class Form: ObservableObject { @Published var text = "" }
+    @StateObject private var f = Form()
+    private var text: String { f.text }
+
+    private var hint: String {
+        let p = model.envPreview(text)
+        if p.found == 0 { return "Aucune ligne NOM=valeur reconnue." }
+        var t = "\(p.found) secret\(p.found > 1 ? "s" : "") détecté\(p.found > 1 ? "s" : "")"
+        if p.replaced > 0 { t += ", dont \(p.replaced) remplacé\(p.replaced > 1 ? "s" : "")" }
+        return t
+    }
+
+    var body: some View {
+        SheetFrame(title: "Importer un .env", confirm: "Importer", enabled: model.envPreview(text).found > 0,
+                   onConfirm: { model.importEnv(text) }, onCancel: { model.sheet = nil }) {
+            Text("Colle le contenu du fichier : une ligne NOM=valeur par secret. Les secrets existants du même nom sont remplacés.")
+                .font(.callout).foregroundStyle(Theme.inkSoft)
+            TextEditor(text: $f.text).font(.system(.callout, design: .monospaced)).frame(height: 170)
+                .scrollContentBackground(.hidden).background(Theme.paperRaised)
+                .overlay(Rectangle().stroke(Theme.rule, lineWidth: 1))
+            Text(hint).font(.caption).foregroundStyle(Theme.inkSoft)
+        }
+    }
+}
+
+struct GroupSheet: View {
+    @ObservedObject var model: VaultModel
+    let entry: Entry
+    final class Form: ObservableObject { @Published var label = "" }
+    @StateObject private var f = Form()
+    private var label: String { f.label }
+
+    var body: some View {
+        let st = model.groupState(of: entry)
+        SheetFrame(title: "Groupe de \(entry.base)", confirm: "Enregistrer",
+                   onConfirm: { model.setGroup(entry, label: label) }, onCancel: { model.sheet = nil }) {
+            Text("Choisis un groupe existant ou saisis un nouveau nom. « Automatique » revient au classement d'après le nom.")
+                .font(.callout).foregroundStyle(Theme.inkSoft)
+            Picker("Groupes existants", selection: $f.label) {
+                Text("—").tag(label)
+                ForEach(model.existingGroupLabels, id: \.self) { Text($0).tag($0) }
+            }
+            TextField("Nom du groupe", text: $f.label).textFieldStyle(.roundedBorder)
+            if st.mine != nil {
+                Button("Automatique") { model.setGroup(entry, label: nil) }
+            }
+        }
+        .onAppear { f.label = st.mine ?? st.auto }
     }
 }
