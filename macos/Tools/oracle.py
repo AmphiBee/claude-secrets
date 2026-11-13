@@ -125,3 +125,28 @@ UNI=é✓
     "env_parsed": [[n, v] for n, v in cs.parse_env(env_text)],
 }, indent=1, ensure_ascii=False, sort_keys=True) + "\n")
 print("edits")
+
+# Bitwarden : traduction éléments → secrets, adresses web (éléments fictifs).
+def f(name, value, typ=1): return {"name": name, "value": value, "type": typ}
+BW_ITEMS = [
+    {"name": "Acme Mail", "login": {"username": "a@x.fr", "password": "pw1", "uris": [{"uri": "https://www.Acme.com/login"}]}, "fields": []},
+    {"name": "Solo Token", "login": {"username": "", "password": "tok", "uris": []}, "fields": []},
+    {"name": "Hors env", "login": {"password": "p"}, "fields": [f("claude_secrets_export", "Non", 0)]},
+    {"name": "Nom forcé", "login": {"password": "p"}, "fields": [f("claude_secrets_name", "mon-nom 1"), f("note", "visible", 0)]},
+    {"name": "Champs", "login": {}, "fields": [f("Api Key", "k1"), f("Visible", "v", 0), f("Vide", ""), f("api key", "k2"), f("Api Key", "k3")]},
+    {"name": "Note seule", "notes": "  texte secret  ", "login": {}, "fields": []},
+    {"name": "Note + champ", "notes": "ignorée", "login": {}, "fields": [f("A", "1")]},
+    {"name": "123 chiffres", "login": {"password": "p", "uris": [{"uri": "http://192.168.1.10/x"}]}, "fields": []},
+    {"name": "Mobile", "login": {"password": "p", "uris": [{"uri": "androidapp://com.x"}, {"uri": "app.mobile.io"}]}, "fields": []},
+    {"name": "Local", "login": {"password": "p", "uris": [{"uri": "http://site.local"}, {"uri": "localhost:8080"}, {"uri": "http://x.test"}]}, "fields": []},
+    {"name": "Impots", "login": {"username": "u", "password": "p", "uris": [{"uri": "https://cfspart.impots.gouv.fr/x"}]}, "fields": []},
+    {"name": "Été & café", "login": {"password": "p"}, "fields": []},
+    {"name": "---", "login": {"password": "p"}, "fields": []},
+]
+(OUT / "bw.json").write_text(json.dumps({
+    "items": BW_ITEMS,
+    "map": [[n, v, e] for n, v, e in cs.bw_map(BW_ITEMS)],
+    "domains": cs.bw_domains(BW_ITEMS),
+    "slugs": {t: cs.bw_slug(t) for t in ["a b", "  x--y ", "1abc", "é", "A_b-c", "", "x.y.z", "9"]},
+}, indent=1, ensure_ascii=False, sort_keys=True) + "\n")
+print("bw")

@@ -15,7 +15,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             MainActor.assumeIsolated { self?.windowHidden() }
         }
         NotificationCenter.default.addObserver(forName: NSWindow.didBecomeMainNotification, object: nil, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated { self?.releaseTask?.cancel(); self?.model?.load() }
+            MainActor.assumeIsolated { self?.releaseTask?.cancel(); self?.model?.load(); self?.model?.autoSync() }
         }
     }
 
@@ -48,6 +48,16 @@ struct ClaudeSecretsApp: App {
         }
         .defaultSize(width: 680, height: 760)
         .commands {
+            CommandMenu("Bitwarden") {
+                Button("Synchroniser") { model.syncNow() }.keyboardShortcut("r").disabled(!model.isReady || model.syncing)
+                Button("Configurer…") { model.sheet = .bwSetup }.disabled(!model.isReady)
+                Button("Déverrouiller…") { model.sheet = .bwUnlock }.disabled(!model.isReady || !model.bwConfigured)
+                Toggle("Synchronisation automatique", isOn: Binding(get: { model.autoSyncEnabled }, set: { model.setAutoSync($0) }))
+                Divider()
+                Button("Se déconnecter") { model.bwLogout() }.disabled(!model.bwConfigured)
+                Divider()
+                Button("Importer les profils AWS…") { model.sheet = .awsImport }.disabled(!model.isReady)
+            }
             CommandGroup(replacing: .newItem) {
                 Button("Nouveau secret…") { model.sheet = .newSecret }.keyboardShortcut("n").disabled(!model.isReady)
                 Button("Importer un .env…") { model.sheet = .importEnv }.keyboardShortcut("i").disabled(!model.isReady)

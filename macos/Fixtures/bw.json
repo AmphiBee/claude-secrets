@@ -1,0 +1,274 @@
+{
+ "domains": {
+  "ACME_MAIL": "acme.com",
+  "ACME_MAIL_PASSWORD": "acme.com",
+  "ACME_MAIL_USER": "acme.com",
+  "IMPOTS": "cfspart.impots.gouv.fr",
+  "IMPOTS_PASSWORD": "cfspart.impots.gouv.fr",
+  "IMPOTS_USER": "cfspart.impots.gouv.fr",
+  "MOBILE": "app.mobile.io"
+ },
+ "items": [
+  {
+   "fields": [],
+   "login": {
+    "password": "pw1",
+    "uris": [
+     {
+      "uri": "https://www.Acme.com/login"
+     }
+    ],
+    "username": "a@x.fr"
+   },
+   "name": "Acme Mail"
+  },
+  {
+   "fields": [],
+   "login": {
+    "password": "tok",
+    "uris": [],
+    "username": ""
+   },
+   "name": "Solo Token"
+  },
+  {
+   "fields": [
+    {
+     "name": "claude_secrets_export",
+     "type": 0,
+     "value": "Non"
+    }
+   ],
+   "login": {
+    "password": "p"
+   },
+   "name": "Hors env"
+  },
+  {
+   "fields": [
+    {
+     "name": "claude_secrets_name",
+     "type": 1,
+     "value": "mon-nom 1"
+    },
+    {
+     "name": "note",
+     "type": 0,
+     "value": "visible"
+    }
+   ],
+   "login": {
+    "password": "p"
+   },
+   "name": "Nom forcé"
+  },
+  {
+   "fields": [
+    {
+     "name": "Api Key",
+     "type": 1,
+     "value": "k1"
+    },
+    {
+     "name": "Visible",
+     "type": 0,
+     "value": "v"
+    },
+    {
+     "name": "Vide",
+     "type": 1,
+     "value": ""
+    },
+    {
+     "name": "api key",
+     "type": 1,
+     "value": "k2"
+    },
+    {
+     "name": "Api Key",
+     "type": 1,
+     "value": "k3"
+    }
+   ],
+   "login": {},
+   "name": "Champs"
+  },
+  {
+   "fields": [],
+   "login": {},
+   "name": "Note seule",
+   "notes": "  texte secret  "
+  },
+  {
+   "fields": [
+    {
+     "name": "A",
+     "type": 1,
+     "value": "1"
+    }
+   ],
+   "login": {},
+   "name": "Note + champ",
+   "notes": "ignorée"
+  },
+  {
+   "fields": [],
+   "login": {
+    "password": "p",
+    "uris": [
+     {
+      "uri": "http://192.168.1.10/x"
+     }
+    ]
+   },
+   "name": "123 chiffres"
+  },
+  {
+   "fields": [],
+   "login": {
+    "password": "p",
+    "uris": [
+     {
+      "uri": "androidapp://com.x"
+     },
+     {
+      "uri": "app.mobile.io"
+     }
+    ]
+   },
+   "name": "Mobile"
+  },
+  {
+   "fields": [],
+   "login": {
+    "password": "p",
+    "uris": [
+     {
+      "uri": "http://site.local"
+     },
+     {
+      "uri": "localhost:8080"
+     },
+     {
+      "uri": "http://x.test"
+     }
+    ]
+   },
+   "name": "Local"
+  },
+  {
+   "fields": [],
+   "login": {
+    "password": "p",
+    "uris": [
+     {
+      "uri": "https://cfspart.impots.gouv.fr/x"
+     }
+    ],
+    "username": "u"
+   },
+   "name": "Impots"
+  },
+  {
+   "fields": [],
+   "login": {
+    "password": "p"
+   },
+   "name": "Été & café"
+  },
+  {
+   "fields": [],
+   "login": {
+    "password": "p"
+   },
+   "name": "---"
+  }
+ ],
+ "map": [
+  [
+   "ACME_MAIL_USER",
+   "a@x.fr",
+   true
+  ],
+  [
+   "ACME_MAIL_PASSWORD",
+   "pw1",
+   true
+  ],
+  [
+   "SOLO_TOKEN",
+   "tok",
+   true
+  ],
+  [
+   "HORS_ENV",
+   "p",
+   false
+  ],
+  [
+   "MON_NOM_1",
+   "p",
+   true
+  ],
+  [
+   "CHAMPS_API_KEY",
+   "k3",
+   true
+  ],
+  [
+   "CHAMPS_API_KEY",
+   "k2",
+   true
+  ],
+  [
+   "NOTE_SEULE",
+   "texte secret",
+   true
+  ],
+  [
+   "NOTE_CHAMP_A",
+   "1",
+   true
+  ],
+  [
+   "X123_CHIFFRES",
+   "p",
+   true
+  ],
+  [
+   "MOBILE",
+   "p",
+   true
+  ],
+  [
+   "LOCAL",
+   "p",
+   true
+  ],
+  [
+   "IMPOTS_USER",
+   "u",
+   true
+  ],
+  [
+   "IMPOTS_PASSWORD",
+   "p",
+   true
+  ],
+  [
+   "T_CAF",
+   "p",
+   true
+  ]
+ ],
+ "slugs": {
+  "": "",
+  "  x--y ": "X_Y",
+  "1abc": "X1ABC",
+  "9": "X9",
+  "A_b-c": "A_B_C",
+  "a b": "A_B",
+  "x.y.z": "X_Y_Z",
+  "é": ""
+ }
+}

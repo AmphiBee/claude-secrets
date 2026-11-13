@@ -109,6 +109,9 @@ check("setLogin crée _USER et _PASSWORD", v.contains { $0.name == "ZZTEST_L_USE
 check("normalisation du nom", VaultEdit.normalize("  mon-token api ") == "MON_TOKEN_API")
 check("noms AWS", VaultEdit.names(.aws, "AWS_X") == ["AWS_X_ACCESS_KEY_ID", "AWS_X_SECRET_ACCESS_KEY", "AWS_X_SESSION_TOKEN"])
 
+runBitwardenTests(fixtures)
+runAwsTests()
+
 if CommandLine.arguments.contains("keychain") { runKeychainTests() }
 
 print(failures == 0 ? "\nTout est vert." : "\n\(failures) échec(s).")

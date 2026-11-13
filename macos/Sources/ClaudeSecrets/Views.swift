@@ -53,6 +53,9 @@ struct ContentView: View {
             case .edit(let e): SecretSheet(model: model, editing: e)
             case .importEnv: ImportSheet(model: model)
             case .group(let e): GroupSheet(model: model, entry: e)
+            case .bwSetup: BwSetupSheet(model: model)
+            case .bwUnlock: BwUnlockSheet(model: model)
+            case .awsImport: AwsImportSheet(model: model)
             }
         }
         .confirmationDialog("Supprimer ce profil AWS ?", isPresented: Binding(
@@ -78,6 +81,11 @@ struct Header: View {
                 Seal()
                 Text("Claude Secrets").font(Theme.title(22)).foregroundStyle(Theme.ink)
                 Spacer()
+                Button { model.syncNow() } label: {
+                    if model.syncing { ProgressView().controlSize(.small) } else { Image(systemName: "arrow.triangle.2.circlepath") }
+                }
+                .help("Synchroniser Bitwarden (⌘R)").accessibilityLabel("Synchroniser Bitwarden")
+                .disabled(!model.isReady || model.syncing)
                 Button { model.sheet = .newSecret } label: { Label("Nouveau", systemImage: "plus") }
                     .help("Nouveau secret (⌘N)").disabled(!model.isReady)
                 Picker("Classement", selection: $model.mode) {
@@ -374,5 +382,88 @@ struct GroupSheet: View {
             }
         }
         .onAppear { f.label = st.mine ?? st.auto }
+    }
+}
+
+
+struct BwSetupSheet: View {
+    @ObservedObject var model: VaultModel
+    final class Form: ObservableObject {
+        @Published var server = ""
+        @Published var email = ""
+        @Published var password = ""
+        @Published var code = ""
+        @Published var folder = bwDefaultFolder
+        @Published var error: String?
+        @Published var busy = false
+    }
+    @StateObject private var f = Form()
+
+    var body: some View {
+        SheetFrame(title: "Configurer Bitwarden", confirm: f.busy ? "Connexion…" : "Se connecter",
+                   enabled: !f.busy && !f.password.isEmpty && (!f.email.isEmpty || model.bwConfigured),
+                   onConfirm: submit, onCancel: { model.sheet = nil }) {
+            Text("Le mot de passe maître n'est pas conservé : seule la clé de session l'est, chiffrée dans le trousseau.")
+                .font(.callout).foregroundStyle(Theme.inkSoft)
+            TextField("Serveur (vide = bitwarden.com)", text: $f.server).textFieldStyle(.roundedBorder)
+            TextField("Adresse e-mail", text: $f.email).textFieldStyle(.roundedBorder).textContentType(.username)
+            SecureField("Mot de passe maître", text: $f.password).textFieldStyle(.roundedBorder)
+            TextField("Code à deux facteurs (si demandé)", text: $f.code).textFieldStyle(.roundedBorder)
+            TextField("Dossier à synchroniser", text: $f.folder).textFieldStyle(.roundedBorder)
+            if let e = f.error { Label(e, systemImage: "exclamationmark.triangle").font(.caption).foregroundStyle(Theme.copper) }
+        }
+        .onAppear {
+            let c = BitwardenClient.conf()
+            f.server = c["server"] as? String ?? ""; f.email = c["email"] as? String ?? ""
+            f.folder = model.bwFolder
+        }
+    }
+
+    private func submit() {
+        f.busy = true; f.error = nil
+        let pwd = f.password
+        f.password = ""     // le champ est vidé tout de suite : le mot de passe ne reste pas dans l'interface
+        model.setupBitwarden(server: f.server, email: f.email, password: pwd, code: f.code, folder: f.folder) { err in
+            f.busy = false; f.error = err
+        }
+    }
+}
+
+struct BwUnlockSheet: View {
+    @ObservedObject var model: VaultModel
+    final class Form: ObservableObject { @Published var password = "" }
+    @StateObject private var f = Form()
+
+    var body: some View {
+        SheetFrame(title: "Coffre Bitwarden verrouillé", confirm: "Déverrouiller", enabled: !f.password.isEmpty,
+                   onConfirm: {
+                       let p = f.password; f.password = ""
+                       model.unlockBitwarden(password: p) { _ in }
+                   }, onCancel: { model.sheet = nil }) {
+            Text("Saisis ton mot de passe maître pour déverrouiller. Il n'est pas conservé : seule la clé de session l'est, chiffrée dans le trousseau.")
+                .font(.callout).foregroundStyle(Theme.inkSoft)
+            SecureField("Mot de passe maître", text: $f.password).textFieldStyle(.roundedBorder)
+        }
+    }
+}
+
+struct AwsImportSheet: View {
+    @ObservedObject var model: VaultModel
+    final class Form: ObservableObject { @Published var activate = false }
+    @StateObject private var f = Form()
+    private var count: Int { Aws.profiles().count }
+
+    var body: some View {
+        SheetFrame(title: "Importer les profils AWS", confirm: "Importer", enabled: count > 0,
+                   onConfirm: { model.importAws(activate: f.activate); model.sheet = nil }, onCancel: { model.sheet = nil }) {
+            Text(count == 0 ? "Aucun profil exploitable dans ~/.aws/credentials."
+                 : "\(count) profil\(count > 1 ? "s" : "") trouvé\(count > 1 ? "s" : "") dans ~/.aws/credentials. Ils iront dans le trousseau, hors environnement.")
+                .font(.callout).foregroundStyle(Theme.inkSoft)
+            Toggle("Activer credential_process pour l'AWS CLI", isOn: $f.activate)
+            if f.activate {
+                Text("~/.aws/config recevra une ligne credential_process, et ~/.aws/credentials sera renommé en credentials.disabled (il avait priorité). Une copie datée de chaque fichier est faite avant.")
+                    .font(.caption).foregroundStyle(Theme.inkSoft)
+            }
+        }
     }
 }

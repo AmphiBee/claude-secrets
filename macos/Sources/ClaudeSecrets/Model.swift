@@ -10,13 +10,16 @@ struct Toast: Equatable {
 }
 
 enum ActiveSheet: Identifiable, Equatable {
-    case newSecret, edit(Entry), importEnv, group(Entry)
+    case newSecret, edit(Entry), importEnv, group(Entry), bwSetup, bwUnlock, awsImport
     var id: String {
         switch self {
         case .newSecret: return "new"
         case .edit(let e): return "edit:" + e.base
         case .importEnv: return "import"
         case .group(let e): return "group:" + e.base
+        case .bwSetup: return "bwsetup"
+        case .bwUnlock: return "bwunlock"
+        case .awsImport: return "awsimport"
         }
     }
 }
@@ -43,6 +46,9 @@ final class VaultModel: ObservableObject {
     @Published var toast: Toast?
     @Published var sheet: ActiveSheet?
     @Published var confirmAWS: Entry?
+    @Published var syncing = false
+    var lastSync: Date?
+    var autoErrorShown = false
 
     @Published private(set) var sections: [Section] = []
     private var entries: [Entry] = []
@@ -52,7 +58,7 @@ final class VaultModel: ObservableObject {
     private var trash: [String: [VaultSecret]] = [:]
     private var trashCounter = 0
     private var loadedAt: Date?
-    private let store: VaultStore
+    let store: VaultStore
 
     init(store: VaultStore = KeychainVaultStore()) {
         self.store = store
@@ -76,7 +82,7 @@ final class VaultModel: ObservableObject {
         }
     }
 
-    private func apply(_ secrets: [VaultSecret]) {
+    func apply(_ secrets: [VaultSecret]) {
         entries = grouped(secrets.map { ($0.name, $0.value, $0.exported) })
         let st = AppState.read()
         domains = st["domains"] as? [String: String] ?? [:]
@@ -85,6 +91,7 @@ final class VaultModel: ObservableObject {
         loadedAt = Date()
         phase = .ready
         rebuild()
+        if lastSync == nil { Task { try? await Task.sleep(for: .seconds(1.5)); autoSync() } }
     }
 
     /// Ferme tout et libère les valeurs : appelé quand la fenêtre est masquée.
@@ -94,7 +101,7 @@ final class VaultModel: ObservableObject {
 
     /// Masquage prolongé : on relâche aussi les valeurs de la mémoire.
     func releaseValues() {
-        hide(); trash = [:]; entries = []; sections = []; taxonomy = Taxonomy([]); phase = .loading; loadedAt = nil
+        hide(); trash = [:]; entries = []; lastSync = nil; sections = []; taxonomy = Taxonomy([]); phase = .loading; loadedAt = nil
     }
 
     // MARK: affichage
@@ -167,7 +174,7 @@ final class VaultModel: ObservableObject {
         if revealed.contains(e.base) { revealed.remove(e.base) } else { revealed.insert(e.base) }
     }
 
-    private func flash(_ text: String, seconds: Double = 3, action: (String, String)? = nil) {
+    func flash(_ text: String, seconds: Double = 3, action: (String, String)? = nil) {
         let t = Toast(text: text, actionLabel: action?.0, actionKey: action?.1)
         toast = t
         Task { try? await Task.sleep(for: .seconds(seconds)); if toast == t { toast = nil } }
@@ -233,6 +240,7 @@ final class VaultModel: ObservableObject {
     }
 
     func undo(_ key: String) {
+        if key == "bw-unlock" { toast = nil; sheet = .bwUnlock; return }
         toast = nil
         guard let snaps = trash.removeValue(forKey: key) else { flash("Trop tard : suppression définitive"); return }
         write({ all in VaultEdit.restore(&all, snaps) }) { [weak self] ok in if ok { self?.flash("Secret restauré") } }

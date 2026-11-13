@@ -31,7 +31,8 @@ public enum VaultError: Error, CustomStringConvertible {
 
 /// Stockage du coffre. Derrière un protocole pour pouvoir basculer sur la CLI en repli.
 public protocol VaultStore: Sendable {
-    func load() throws -> [VaultSecret]
+    /// `includeReserved` : noms en `_…` (clé de session Bitwarden) ; faux pour tout ce qui est affiché.
+    func load(includeReserved: Bool) throws -> [VaultSecret]
     /// Écriture atomique entre processus : verrou exclusif, relecture, modification, réécriture,
     /// régénération du cache du shell. Retourne le coffre (sans les noms réservés) après modification.
     @discardableResult
@@ -70,6 +71,10 @@ public enum Vault {
         for s in secrets { m[s.name] = ["value": s.value, "export": s.exported ? "1" : "0", "source": s.source] }
         return try JSONSerialization.data(withJSONObject: m, options: [.sortedKeys, .withoutEscapingSlashes])
     }
+}
+
+public extension VaultStore {
+    func load() throws -> [VaultSecret] { try load(includeReserved: false) }
 }
 
 /// Ordre des points de code Unicode (= ordre UTF-8), celui de `sorted()` en Python.
@@ -114,8 +119,9 @@ public struct KeychainVaultStore: VaultStore {
         guard rc == errSecSuccess else { throw VaultError.keychain(rc) }
     }
 
-    public func load() throws -> [VaultSecret] {
-        try readAll().filter { !$0.name.hasPrefix("_") }
+    public func load(includeReserved: Bool) throws -> [VaultSecret] {
+        let all = try readAll()
+        return includeReserved ? all : all.filter { !$0.name.hasPrefix("_") }
     }
 
     @discardableResult
@@ -123,12 +129,18 @@ public struct KeychainVaultStore: VaultStore {
         let lock = try FileLock(url: lockURL)    // tenu jusqu'à la fin de la fonction
         defer { lock.release() }
         var all = try readAll()                  // relire APRÈS le verrou, sinon deux écrivains s'écraseraient
+        let before = all
         try body(&all)
         var seen = Set<String>()
         all = all.filter { seen.insert($0.name).inserted }   // jamais de doublon
-        try writeAll(all)
         let visible = all.filter { !$0.name.hasPrefix("_") }.sorted { codePointLess($0.name, $1.name) }
-        if let cacheURL { try? ShellCache.write(visible, to: cacheURL) }
+        // Rien n'a changé : on n'écrit ni le trousseau (l'app deviendrait « dernier écrivain », donc plus lente
+        // pour la CLI) ni le cache (il pourrait écraser une photo plus récente).
+        let changed = Dictionary(uniqueKeysWithValues: before.map { ($0.name, $0) }) != Dictionary(uniqueKeysWithValues: all.map { ($0.name, $0) })
+        if changed {
+            try writeAll(all)
+            if let cacheURL { try? ShellCache.write(visible, to: cacheURL) }
+        }
         return visible
     }
 }
@@ -144,4 +156,27 @@ public final class FileLock {
     }
     public func release() { if fd >= 0 { flock(fd, LOCK_UN); close(fd); fd = -1 } }
     deinit { release() }
+}
+
+/// Coffre en mémoire, mêmes règles de transaction : pour les tests (aucun trousseau).
+public final class MemoryVaultStore: VaultStore, @unchecked Sendable {
+    private let lock = NSLock()
+    private var secrets: [VaultSecret]
+    public init(_ secrets: [VaultSecret] = []) { self.secrets = secrets }
+
+    public func load(includeReserved: Bool) throws -> [VaultSecret] {
+        lock.lock(); defer { lock.unlock() }
+        let all = secrets.sorted { codePointLess($0.name, $1.name) }
+        return includeReserved ? all : all.filter { !$0.name.hasPrefix("_") }
+    }
+
+    @discardableResult
+    public func transaction(_ body: (inout [VaultSecret]) throws -> Void) throws -> [VaultSecret] {
+        lock.lock(); defer { lock.unlock() }
+        var all = secrets
+        try body(&all)
+        var seen = Set<String>()
+        secrets = all.filter { seen.insert($0.name).inserted }
+        return secrets.filter { !$0.name.hasPrefix("_") }.sorted { codePointLess($0.name, $1.name) }
+    }
 }
