@@ -1,7 +1,6 @@
 import Foundation
 import SecretsCore
 
-enum GroupMode: String { case service, type }
 
 struct Toast: Equatable {
     var text: String
@@ -24,12 +23,33 @@ enum ActiveSheet: Identifiable, Equatable {
     }
 }
 
-/// Section affichée : un groupe (service) ou une catégorie (mode « par type »).
-struct Section: Identifiable {
+/// Un bloc de la liste de détail : un service (résultats de recherche) ou l'ensemble affiché.
+struct EntrySection: Identifiable {
     let id: String
     let label: String
     let tag: String?          // PROJET / MANUEL
     let members: [Entry]
+}
+
+extension Entry: Identifiable { public var id: String { base } }
+
+/// Une ligne de la barre latérale.
+struct SideItem: Identifiable {
+    let id: String
+    let label: String
+    let count: Int
+    let tag: String?
+    let symbol: String?       // collections seulement ; les services portent un monogramme
+}
+
+/// Ce que montre le volet de détail.
+struct DetailContent {
+    var title = ""
+    var subtitle = ""
+    var tag: String?
+    var monogram: String?
+    var sections: [EntrySection] = []
+    var count: Int { sections.reduce(0) { $0 + $1.members.count } }
 }
 
 final class SnapshotBox: @unchecked Sendable { var snaps: [VaultSecret] = [] }
@@ -40,9 +60,9 @@ final class VaultModel: ObservableObject {
 
     @Published var phase: Phase = .loading
     @Published var query = ""
-    @Published var expanded = Set<String>()
+    @Published var selection = "all"
+    @Published var selectedEntry: String?
     @Published var revealed = Set<String>()
-    @Published var mode: GroupMode = .service { didSet { if mode != oldValue { AppState.update(["group_by": mode.rawValue]) } } }
     @Published var toast: Toast?
     @Published var sheet: ActiveSheet?
     @Published var confirmAWS: Entry?
@@ -52,7 +72,10 @@ final class VaultModel: ObservableObject {
     var lastSync: Date?
     var autoErrorShown = false
 
-    @Published private(set) var sections: [Section] = []
+    @Published private(set) var collections: [SideItem] = []
+    @Published private(set) var sidebar: [(letter: String, items: [SideItem])] = []
+    @Published private(set) var buckets: [SideItem] = []
+    @Published private(set) var detail = DetailContent()
     private var entries: [Entry] = []
     private var taxonomy = Taxonomy([])
     private var domains: [String: String] = [:]
@@ -64,8 +87,12 @@ final class VaultModel: ObservableObject {
 
     init(store: VaultStore = KeychainVaultStore()) {
         self.store = store
-        let m = AppState.read()["group_by"] as? String
-        mode = GroupMode(rawValue: m ?? "") ?? .service
+        #if DEBUG
+        // Aides de développement (captures d'écran de la démo) : jamais dans une version de production.
+        let env = ProcessInfo.processInfo.environment
+        if let s = env["CLAUDE_SECRETS_UI_SELECT"] { selection = s }
+        if let q = env["CLAUDE_SECRETS_UI_QUERY"] { query = q }
+        #endif
     }
 
     // MARK: chargement (une seule lecture du trousseau, puis tout en mémoire)
@@ -105,38 +132,77 @@ final class VaultModel: ObservableObject {
 
     /// Ferme tout et libère les valeurs : appelé quand la fenêtre est masquée.
     func hide() {
-        query = ""; expanded = []; revealed = []; toast = nil; sheet = nil; confirmAWS = nil; entered = false; auth.reset()
+        query = ""; selectedEntry = nil; revealed = []; toast = nil; sheet = nil; confirmAWS = nil; entered = false; auth.reset()
     }
 
     /// Masquage prolongé : on relâche aussi les valeurs de la mémoire.
     func releaseValues() {
-        hide(); store.dropCache(); trash = [:]; entries = []; lastSync = nil; sections = []; taxonomy = Taxonomy([]); phase = .loading; loadedAt = nil
+        hide(); store.dropCache(); trash = [:]; entries = []; lastSync = nil; detail = DetailContent(); collections = []; sidebar = []; buckets = []; taxonomy = Taxonomy([]); phase = .loading; loadedAt = nil
     }
 
     // MARK: affichage
 
+    static let typeCollections: [(id: String, label: String, symbol: String, test: (Entry) -> Bool)] = [
+        ("type:keys", "Clés et tokens", "key", { $0.kind == .single && $0.exported }),
+        ("type:logins", "Identifiants", "person.text.rectangle", { $0.kind == .pair }),
+        ("type:aws", "AWS", "cloud", { $0.kind == .aws }),
+        ("type:offenv", "Hors environnement", "lock", { $0.kind == .single && !$0.exported }),
+    ]
+
+    func select(_ id: String) {
+        selection = id; selectedEntry = nil; revealed = []
+        rebuild()
+    }
+
     func rebuild() {
+        let groups = taxonomy.group(entries)
+        // barre latérale : collections, puis services par lettre d'index, puis les « autres »
+        var cols = [SideItem(id: "all", label: "Tous les secrets", count: entries.count, tag: nil, symbol: "tray.full")]
+        for t in Self.typeCollections {
+            let n = entries.filter(t.test).count
+            if n > 0 { cols.append(SideItem(id: t.id, label: t.label, count: n, tag: nil, symbol: t.symbol)) }
+        }
+        collections = cols
+        var byLetter: [(String, [SideItem])] = []
+        buckets = []
+        for g in groups {
+            let item = SideItem(id: g.id, label: g.label, count: g.members.count, tag: tag(for: g), symbol: nil)
+            if g.id.hasPrefix("bucket:") { buckets.append(item); continue }
+            let l = indexLetter(g.label)
+            if let i = byLetter.firstIndex(where: { $0.0 == l }) { byLetter[i].1.append(item) } else { byLetter.append((l, [item])) }
+        }
+        sidebar = byLetter.map { (letter: $0.0, items: $0.1) }
+
+        // détail : la recherche prime ; sinon la sélection de la barre latérale
         let q = query.trimmingCharacters(in: .whitespaces).lowercased()
-        let filtered = q.isEmpty ? entries : entries.filter { e in
-            matches(e, q) || taxonomy.labelOf(e.base).lowercased().contains(q)
+        if !q.isEmpty {
+            let found = entries.filter { matches($0, q) || taxonomy.labelOf($0.base).lowercased().contains(q) }
+            let secs = taxonomy.group(found).map { EntrySection(id: $0.id, label: $0.label, tag: tag(for: $0), members: $0.members) }
+            detail = DetailContent(title: "Résultats", subtitle: plural(found.count, "entrée") + " pour « \(query.trimmingCharacters(in: .whitespaces)) »",
+                                   tag: nil, monogram: nil, sections: secs)
+            return
         }
-        switch mode {
-        case .service:
-            sections = taxonomy.group(filtered).map {
-                Section(id: $0.id, label: $0.label, tag: tag(for: $0), members: $0.members)
-            }
-        case .type:
-            let order: [(String, (Entry) -> Bool)] = [
-                ("Clés et tokens", { $0.kind == .single && $0.exported }),
-                ("Identifiants", { $0.kind == .pair }),
-                ("AWS", { $0.kind == .aws }),
-                ("Hors environnement", { $0.kind == .single && !$0.exported }),
-            ]
-            sections = order.compactMap { label, f in
-                let m = filtered.filter(f)
-                return m.isEmpty ? nil : Section(id: "type:\(label)", label: label, tag: nil, members: m)
-            }
+        if let t = Self.typeCollections.first(where: { $0.id == selection }) {
+            let m = entries.filter(t.test)
+            detail = DetailContent(title: t.label, subtitle: plural(m.count, "entrée"), tag: nil, monogram: nil,
+                                   sections: [EntrySection(id: t.id, label: "", tag: nil, members: m)])
+        } else if let g = groups.first(where: { $0.id == selection }) {
+            detail = DetailContent(title: g.label, subtitle: plural(g.members.count, "entrée"), tag: tag(for: g),
+                                   monogram: g.id.hasPrefix("bucket:") ? nil : g.label,
+                                   sections: [EntrySection(id: g.id, label: "", tag: nil, members: g.members)])
+        } else {                                      // « Tous », ou une sélection qui n'existe plus
+            if selection != "all" { selection = "all" }
+            detail = DetailContent(title: "Tous les secrets", subtitle: plural(entries.count, "entrée"), tag: nil, monogram: nil,
+                                   sections: [EntrySection(id: "all", label: "", tag: nil, members: entries)])
         }
+    }
+
+    private func plural(_ n: Int, _ word: String) -> String { "\(n) \(word)\(n > 1 ? "s" : "")" }
+
+    /// Lettre d'index d'un libellé (accents ignorés) ; « # » pour ce qui ne commence pas par une lettre.
+    private func indexLetter(_ s: String) -> String {
+        let f = s.folding(options: .diacriticInsensitive, locale: nil).uppercased().first
+        return f.map { $0.isLetter ? String($0) : "#" } ?? "#"
     }
 
     private func matches(_ e: Entry, _ q: String) -> Bool {
@@ -148,16 +214,6 @@ final class VaultModel: ObservableObject {
     }
 
     var isSearching: Bool { !query.trimmingCharacters(in: .whitespaces).isEmpty }
-    var resultCount: Int { sections.reduce(0) { $0 + $1.members.count } }
-
-    /// Peu de résultats : les groupes s'ouvrent seuls.
-    func isExpanded(_ s: Section) -> Bool {
-        expanded.contains(s.id) || (isSearching && resultCount <= 12)
-    }
-
-    func toggle(_ s: Section) {
-        if expanded.contains(s.id) { expanded.remove(s.id) } else { expanded.insert(s.id) }
-    }
 
     func label(of e: Entry) -> String { taxonomy.labelOf(e.base) }
 
@@ -187,7 +243,9 @@ final class VaultModel: ObservableObject {
 
     /// ⏎ dans la recherche : copie le premier résultat.
     func copyFirst() {
-        if let e = sections.first?.members.first { copy(e) }
+        let all = detail.sections.flatMap(\.members)
+        if let id = selectedEntry, let e = all.first(where: { $0.base == id }) { copy(e) }
+        else if let e = all.first { copy(e) }
     }
 
     func toggleReveal(_ e: Entry) {
@@ -245,7 +303,6 @@ final class VaultModel: ObservableObject {
     func delete(_ e: Entry) {
         if e.kind == .aws && confirmAWS == nil { confirmAWS = e; return }
         confirmAWS = nil
-        expanded.remove(e.base)
         let kind = e.kind, base = e.base
         trashCounter += 1
         let key = String(trashCounter)

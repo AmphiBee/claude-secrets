@@ -10,6 +10,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     static let quitAfter: Duration = .seconds(20 * 60)
 
     func applicationDidFinishLaunching(_ n: Notification) {
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["CLAUDE_SECRETS_UI_DARK"] != nil { NSApp.appearance = NSAppearance(named: .darkAqua) }
+        #endif
         NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: nil, queue: .main) { [weak self] note in
             guard (note.object as? NSWindow)?.canBecomeMain == true else { return }
             MainActor.assumeIsolated { self?.windowHidden() }
@@ -43,10 +46,11 @@ struct ClaudeSecretsApp: App {
     var body: some Scene {
         WindowGroup("Claude Secrets", id: "main") {
             ContentView(model: model)
-                .frame(minWidth: 560, minHeight: 480)
+                .frame(minWidth: 820, minHeight: 500)
                 .onAppear { delegate.model = model }
         }
-        .defaultSize(width: 680, height: 760)
+        .defaultSize(width: 1040, height: 760)
+        .windowToolbarStyle(.unified(showsTitle: false))
         .commands {
             CommandMenu("Bitwarden") {
                 Button("Synchroniser") { model.syncNow() }.keyboardShortcut("r").disabled(!model.isReady || model.syncing)

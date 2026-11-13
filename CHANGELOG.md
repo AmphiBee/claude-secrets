@@ -1,5 +1,25 @@
 # Journal des versions
 
+## 1.14.0
+
+Nouvelle fenêtre pour macOS, pensée pour le Mac en gardant l'identité « papier & cuivre ».
+
+- **Barre latérale + détail**, comme Mail ou Notes : à gauche les collections (Tous, Clés et tokens,
+  Identifiants, AWS, Hors environnement) puis les services par lettre d'index ; à droite le contenu du
+  service choisi. Elle remplace la longue liste à déplier et le sélecteur « Par service / Par type » (les
+  collections font office de classement par type ; la clé `group_by` de `state.json`, propre à l'application
+  Linux, n'est plus lue par l'application macOS).
+- **Barre d'outils unifiée** : recherche native (`⌘F`, `⏎` copie le résultat sélectionné ou le premier),
+  synchronisation et nouveau secret. Le titre de la fenêtre n'est plus répété.
+- **Liste de détail native** : sélection et flèches au clavier, `⏎` copie, menu contextuel au clic droit,
+  actions visibles au survol ou à la sélection seulement, lignes plus denses.
+- **Identité conservée** : papier chaud et titres serif dans le détail, barre latérale en matière native,
+  cuivre réservé aux tampons (PROJET / MANUEL), aux icônes de collection et à l'action principale ;
+  monogrammes plus doux, contrastes AA toujours vérifiés (`make mac-test`), clair et sombre.
+- `macos/Tools/run-demo.sh` lance une copie de démonstration sur un coffre fictif (identifiant d'application
+  distinct, faux Bitwarden, état isolé) et `macos/Tools/shot-window.swift` capture la seule fenêtre d'une
+  application, jamais l'écran entier.
+
 ## 1.13.1
 
 Installation propre de l'application macOS.

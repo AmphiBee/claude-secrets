@@ -3,118 +3,11 @@ import SecretsCore
 
 let redaction = String(repeating: "▇", count: 9)   // de longueur fixe : ne trahit pas la taille du secret
 
-struct ContentView: View {
-    @ObservedObject var model: VaultModel
-    @FocusState private var searchFocused: Bool
-
-    var body: some View {
-        VStack(spacing: 0) {
-            Header(model: model, searchFocused: $searchFocused)
-            Rectangle().fill(Theme.rule).frame(height: 1)
-            switch model.phase {
-            case .loading:
-                Status(symbol: "hourglass", text: "Ouverture du coffre…",
-                       detail: "La première lecture du trousseau peut prendre quelques secondes.")
-            case .failed(let msg):
-                VStack(spacing: 12) {
-                    Status(symbol: "lock.slash", text: "Le coffre reste fermé.", detail: msg)
-                    Button("Réessayer") { model.load(force: true) }
-                }
-            case .ready:
-                if model.sections.isEmpty {
-                    Status(symbol: "tray", text: model.isSearching ? "Rien ne correspond." : "Le coffre est vide.",
-                           detail: nil)
-                } else {
-                    SectionList(model: model)
-                }
-            }
-        }
-        .background(Theme.paper)
-        .overlay(alignment: .bottom) {
-            if let t = model.toast {
-                HStack(spacing: 14) {
-                    Text(t.text).font(.callout)
-                    if let label = t.actionLabel, let key = t.actionKey {
-                        Button(label) { model.undo(key) }.buttonStyle(.plain).fontWeight(.bold)
-                            .underline().foregroundStyle(Theme.toastAccent)
-                    }
-                }
-                .padding(.horizontal, 14).padding(.vertical, 8)
-                .background(Theme.ink).foregroundStyle(Theme.paper)
-                .padding(.bottom, 16).transition(.opacity)
-                .accessibilityElement(children: .combine)
-            }
-        }
-        .animation(.easeOut(duration: 0.18), value: model.toast)
-        .onAppear { model.load(); model.replayEntrance() }
-        .sheet(item: $model.sheet) { sheet in
-            switch sheet {
-            case .newSecret: SecretSheet(model: model, editing: nil)
-            case .edit(let e): SecretSheet(model: model, editing: e)
-            case .importEnv: ImportSheet(model: model)
-            case .group(let e): GroupSheet(model: model, entry: e)
-            case .bwSetup: BwSetupSheet(model: model)
-            case .bwUnlock: BwUnlockSheet(model: model)
-            case .awsImport: AwsImportSheet(model: model)
-            }
-        }
-        .confirmationDialog("Supprimer ce profil AWS ?", isPresented: Binding(
-            get: { model.confirmAWS != nil }, set: { if !$0 { model.confirmAWS = nil } }), titleVisibility: .visible) {
-            Button("Supprimer", role: .destructive) { if let e = model.confirmAWS { model.delete(e) } }
-            Button("Annuler", role: .cancel) { model.confirmAWS = nil }
-        } message: {
-            Text("Les clés seront retirées du trousseau. Pense à retirer aussi la ligne credential_process de ~/.aws/config.")
-        }
-        .background(Button("") { searchFocused = true }.keyboardShortcut("f").opacity(0).accessibilityHidden(true))
-    }
-}
-
 extension VaultModel { var isReady: Bool { if case .ready = phase { return true } else { return false } } }
-
-struct Header: View {
-    @ObservedObject var model: VaultModel
-    var searchFocused: FocusState<Bool>.Binding
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 10) {
-                Seal()
-                Text("Claude Secrets").font(Theme.title(22)).foregroundStyle(Theme.ink)
-                Spacer()
-                Button { model.syncNow() } label: {
-                    if model.syncing { ProgressView().controlSize(.small) } else { Image(systemName: "arrow.triangle.2.circlepath") }
-                }
-                .help("Synchroniser Bitwarden (⌘R)").accessibilityLabel("Synchroniser Bitwarden")
-                .disabled(!model.isReady || model.syncing)
-                Button { model.sheet = .newSecret } label: { Label("Nouveau", systemImage: "plus") }
-                    .help("Nouveau secret (⌘N)").disabled(!model.isReady)
-                Picker("Classement", selection: $model.mode) {
-                    Text("Par service").tag(GroupMode.service)
-                    Text("Par type").tag(GroupMode.type)
-                }
-                .pickerStyle(.segmented).labelsHidden().frame(width: 190)
-                .onChange(of: model.mode) { model.rebuild() }
-            }
-            HStack(spacing: 8) {
-                Image(systemName: "magnifyingglass").foregroundStyle(Theme.inkSoft)
-                TextField("Chercher un secret, un identifiant, un service", text: $model.query)
-                    .textFieldStyle(.plain).focused(searchFocused)
-                    .onSubmit { model.copyFirst() }
-                    .onChange(of: model.query) { model.rebuild() }
-                if model.isSearching {
-                    Button { model.query = "" } label: { Image(systemName: "xmark.circle.fill") }
-                        .buttonStyle(.plain).foregroundStyle(Theme.inkSoft).help("Effacer la recherche")
-                }
-            }
-            .padding(.horizontal, 10).padding(.vertical, 7)
-            .background(Theme.paperRaised).overlay(Rectangle().stroke(Theme.rule, lineWidth: 1))
-        }
-        .padding(16)
-    }
-}
 
 /// Le sceau : seul endroit où le cuivre sert d'ornement.
 struct Seal: View {
+    var size: CGFloat = 30
     var body: some View {
         ZStack {
             Circle().fill(LinearGradient(colors: [Color(red: 0.965, green: 0.663, blue: 0.455), Theme.copperDeep],
@@ -122,7 +15,7 @@ struct Seal: View {
             Image(systemName: "key.fill").font(.system(size: 13, weight: .bold)).foregroundStyle(Theme.spark)
                 .rotationEffect(.degrees(-45))
         }
-        .frame(width: 30, height: 30).accessibilityHidden(true)
+        .frame(width: size, height: size).accessibilityHidden(true)
     }
 }
 
@@ -138,77 +31,14 @@ struct Status: View {
     }
 }
 
-/// Lettre d'index d'un groupe (les accents sont ignorés) ; "" pour les groupes « Autres ».
-func indexLetter(_ s: Section) -> String {
-    if s.id.hasPrefix("bucket:") || s.id.hasPrefix("type:") { return "" }
-    let f = s.label.folding(options: .diacriticInsensitive, locale: nil).uppercased().first
-    return f.map { $0.isLetter ? String($0) : "#" } ?? "#"
-}
-
-struct SectionList: View {
-    @ObservedObject var model: VaultModel
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    var body: some View {
-        ScrollView {
-            LazyVStack(spacing: 0) {
-                ForEach(Array(model.sections.enumerated()), id: \.element.id) { i, s in
-                    let letter = indexLetter(s)
-                    let first = !letter.isEmpty && (i == 0 || indexLetter(model.sections[i - 1]) != letter)
-                    GroupRow(model: model, section: s, letter: first ? letter : nil)
-                        .opacity(model.entered || reduceMotion ? 1 : 0)
-                        .offset(y: model.entered || reduceMotion ? 0 : 8)
-                        // décélération exponentielle, jamais de rebond ; seules les 14 premières lignes sont échelonnées
-                        .animation(reduceMotion ? nil : .timingCurve(0.16, 1, 0.3, 1, duration: 0.55).delay(Double(min(i, 14)) * 0.03),
-                                   value: model.entered)
-                    Rectangle().fill(Theme.rule).frame(height: 1)
-                }
-            }
-        }
-    }
-}
-
-struct GroupRow: View {
-    @ObservedObject var model: VaultModel
-    let section: Section
-    let letter: String?
-
-    var body: some View {
-        let open = model.isExpanded(section)
-        VStack(spacing: 0) {
-            Button { model.toggle(section) } label: {
-                HStack(spacing: 12) {
-                    Text(letter ?? "").font(Theme.title(15)).foregroundStyle(Theme.copper).frame(width: 18)
-                    Monogram(label: section.label)
-                    Text(section.label).font(Theme.title(16)).foregroundStyle(Theme.ink)
-                    if let tag = section.tag { Stamp(text: tag) }
-                    Spacer()
-                    Text("\(section.members.count)").monospacedDigit().foregroundStyle(Theme.inkSoft)
-                    Image(systemName: "chevron.right").rotationEffect(.degrees(open ? 90 : 0))
-                        .foregroundStyle(Theme.inkSoft).imageScale(.small)
-                }
-                .padding(.horizontal, 16).padding(.vertical, 9).contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("\(section.label), \(section.members.count) entrées")
-            .accessibilityValue(open ? "ouvert" : "fermé")
-            if open {   // le contenu n'est construit qu'à l'ouverture
-                VStack(spacing: 0) {
-                    ForEach(section.members, id: \.base) { EntryRow(model: model, entry: $0) }
-                }
-                .padding(.leading, 48).padding(.bottom, 6)
-            }
-        }
-    }
-}
-
 struct Monogram: View {
     let label: String
+    var size: CGFloat = 28
     var body: some View {
         let (bg, border, fg) = Theme.tone(label)
         let ch = label.folding(options: .diacriticInsensitive, locale: nil).uppercased().first.map(String.init) ?? "?"
-        Text(ch).font(Theme.title(14)).foregroundStyle(fg)
-            .frame(width: 28, height: 28).background(bg, in: Circle())
+        Text(ch).font(Theme.title(size * 0.5)).foregroundStyle(fg)
+            .frame(width: size, height: size).background(bg, in: Circle())
             .overlay(Circle().stroke(border, lineWidth: 1)).accessibilityHidden(true)
     }
 }
@@ -216,9 +46,10 @@ struct Monogram: View {
 /// Tampon : l'état est dit en toutes lettres, jamais par la couleur seule.
 struct Stamp: View {
     let text: String
+    var small = false
     var body: some View {
-        Text(text).font(.system(size: 9, weight: .bold)).tracking(1.2).foregroundStyle(Theme.copper)
-            .padding(.horizontal, 5).padding(.vertical, 2)
+        Text(text).font(.system(size: small ? 8 : 9, weight: .bold)).tracking(small ? 0.8 : 1.2).foregroundStyle(Theme.copper)
+            .padding(.horizontal, small ? 4 : 5).padding(.vertical, small ? 1 : 2)
             .overlay(Rectangle().stroke(Theme.copper, lineWidth: 1))
     }
 }
@@ -226,50 +57,63 @@ struct Stamp: View {
 struct EntryRow: View {
     @ObservedObject var model: VaultModel
     let entry: Entry
+    final class Hover: ObservableObject { @Published var on = false }
+    @StateObject private var hover = Hover()
+
+    @ViewBuilder private var actions: some View {
+        Button("Copier la valeur") { model.copy(entry) }
+        if entry.kind != .single { Button("Copier l'identifiant") { model.copyUser(entry) } }
+        Button(model.revealed.contains(entry.base) ? "Masquer" : "Afficher") { model.toggleReveal(entry) }
+        Divider()
+        if entry.kind != .aws { Button("Modifier…") { model.edit(entry) } }
+        Button("Changer de groupe…") { model.sheet = .group(entry) }
+        Divider()
+        Button("Supprimer", role: .destructive) { model.delete(entry) }
+    }
 
     var body: some View {
         let shown = model.revealed.contains(entry.base)
-        HStack(spacing: 8) {
+        HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
-                    Text(entry.base).font(.system(.callout, design: .monospaced)).foregroundStyle(Theme.ink)
-                    if !entry.exported && entry.kind != .aws {
-                        Label("hors environnement", systemImage: "lock.fill").labelStyle(.titleAndIcon)
-                            .font(.caption).foregroundStyle(Theme.inkSoft)
-                    }
+                    Text(entry.base).font(.system(.callout, design: .monospaced)).foregroundStyle(Theme.ink).lineLimit(1)
                     if entry.kind == .aws { Text("AWS").font(.caption).foregroundStyle(Theme.inkSoft) }
                 }
-                if let u = entry.user {
-                    Text(u).font(.caption).foregroundStyle(Theme.inkSoft).textSelection(.disabled)
+                if entry.user != nil || (!entry.exported && entry.kind != .aws) {
+                    HStack(spacing: 8) {
+                        if let u = entry.user { Text(u).lineLimit(1) }
+                        if !entry.exported && entry.kind != .aws {
+                            Label("hors environnement", systemImage: "lock.fill").lineLimit(1).fixedSize()
+                        }
+                    }
+                    .font(.caption).foregroundStyle(Theme.inkSoft)
                 }
             }
             Spacer(minLength: 8)
             Text(shown ? entry.value : redaction).font(.system(.callout, design: .monospaced))
                 .foregroundStyle(shown ? Theme.ink : Theme.inkSoft).lineLimit(1).truncationMode(.tail)
-                .frame(maxWidth: 220, alignment: .trailing)
+                .frame(maxWidth: 200, alignment: .trailing)
                 .accessibilityLabel(shown ? "valeur affichée" : "valeur masquée")
-            Button { model.toggleReveal(entry) } label: { Image(systemName: shown ? "eye.slash" : "eye") }
-                .help(shown ? "Masquer" : "Afficher").accessibilityLabel(shown ? "Masquer la valeur" : "Afficher la valeur")
-            if entry.kind != .single {
-                Button { model.copyUser(entry) } label: { Image(systemName: "person") }
-                    .help("Copier l'identifiant").accessibilityLabel("Copier l'identifiant")
+            // Actions au survol ou à la sélection (comme Mail) ; elles restent dans l'arbre d'accessibilité.
+            HStack(spacing: 8) {
+                Button { model.toggleReveal(entry) } label: { Image(systemName: shown ? "eye.slash" : "eye") }
+                    .help(shown ? "Masquer" : "Afficher").accessibilityLabel(shown ? "Masquer la valeur" : "Afficher la valeur")
+                Button { model.copy(entry) } label: { Image(systemName: "doc.on.doc") }
+                    .help("Copier (effacé après 45 s)").accessibilityLabel("Copier la valeur")
+                Menu { actions } label: { Image(systemName: "ellipsis.circle") }
+                    .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+                    .help("Plus d'actions").accessibilityLabel("Plus d'actions")
             }
-            Button { model.copy(entry) } label: { Image(systemName: "doc.on.doc") }
-                .help("Copier (effacé après 45 s)").accessibilityLabel("Copier la valeur")
-            Menu {
-                if entry.kind != .aws { Button("Modifier…") { model.edit(entry) } }
-                if model.mode == .service { Button("Changer de groupe…") { model.sheet = .group(entry) } }
-                Divider()
-                Button("Supprimer", role: .destructive) { model.delete(entry) }
-            } label: { Image(systemName: "ellipsis.circle") }
-                .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
-                .help("Plus d'actions").accessibilityLabel("Plus d'actions")
+            .opacity(hover.on || model.selectedEntry == entry.base || shown ? 1 : 0)
+            .animation(.easeOut(duration: 0.12), value: hover.on)
         }
+        .onHover { hover.on = $0 }
         .buttonStyle(.borderless).foregroundStyle(Theme.copper)
-        .padding(.vertical, 5).padding(.trailing, 16)
+        .padding(.vertical, 4)
+        .contentShape(Rectangle())
+        .contextMenu { actions }
     }
 }
-
 
 // MARK: - Fenêtres de saisie
 

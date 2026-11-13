@@ -36,7 +36,7 @@ for i, mode in enumerate(("clair", "sombre")):
     worst = 99
     for t in range(24):
         h = t / 24
-        bg = hsl(h, .62, .90 if i == 0 else .22); fg = hsl(h, .66, .26 if i == 0 else .86)
+        bg = hsl(h, .42, .91 if i == 0 else .22); fg = hsl(h, .55, .28 if i == 0 else .86)
         worst = min(worst, ratio(fg, bg))
     ok = worst >= 4.5; fail += not ok
     print(f"  [{'✓' if ok else '✗'}] monogramme, pire des 24 teintes : {worst:.2f} (≥ 4.5)")
