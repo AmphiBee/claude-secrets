@@ -64,6 +64,19 @@ func runKeychainTests() {
     check("Swift relit ce que la CLI a écrit, sans rien perdre",
           rc2 == 0 && afterPy.map(\.name) == ["ZZTEST_A", "ZZTEST_B", "ZZTEST_FROMPY"])
 
+    // Cache de lecture : une seule lecture de la valeur tant que l'élément n'a pas changé.
+    print("Cache de lecture (date de modification)")
+    Thread.sleep(forTimeInterval: 2.2)                       // l'élément est stable : le cache devient fiable
+    let c1 = (try? store.load()) ?? []
+    let t0 = Date(); let c2 = (try? store.load()) ?? []; let dt = Date().timeIntervalSince(t0)
+    check("deuxième lecture servie par le cache (\(Int(dt * 1000)) ms)", c1 == c2 && dt < 0.2)
+    _ = python(service, """
+    k._lock(); v = k._load(); v["ZZTEST_APRES_CACHE"] = {"value": "n", "export": "1", "source": "local"}
+    k._state["dirty"] = True; k._flush()
+    """)
+    check("écriture externe juste après : la lecture suivante la voit (cache invalidé par la date)",
+          ((try? store.load()) ?? []).contains { $0.name == "ZZTEST_APRES_CACHE" })
+
     // Concurrence : 3 écrivains Python et 3 écrivains Swift en même temps, aucune mise à jour perdue.
     print("Concurrence (3 processus Python + 3 fils Swift)")
     let group = DispatchGroup()
@@ -84,7 +97,7 @@ func runKeychainTests() {
     group.wait()
     let final = (try? store.load()) ?? []
     check("aucun écrivain en erreur", pyOK)
-    check("aucune mise à jour perdue : 3 + 12 Python + 12 Swift = \(final.count)", final.count == 3 + 12 + 12)
+    check("aucune mise à jour perdue : 4 + 12 Python + 12 Swift = \(final.count)", final.count == 4 + 12 + 12)
     let ids = Set(final.map(\.name))
     check("tous les noms attendus présents",
           (0..<3).allSatisfy { n in (0..<4).allSatisfy { ids.contains("ZZTEST_PY\(n)_\($0)") && ids.contains("ZZTEST_SW\(n)_\($0)") } })

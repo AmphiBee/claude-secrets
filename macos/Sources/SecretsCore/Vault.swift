@@ -37,6 +37,8 @@ public protocol VaultStore: Sendable {
     /// régénération du cache du shell. Retourne le coffre (sans les noms réservés) après modification.
     @discardableResult
     func transaction(_ body: (inout [VaultSecret]) throws -> Void) throws -> [VaultSecret]
+    /// Oublie la copie en mémoire des valeurs (masquage prolongé).
+    func dropCache()
 }
 
 public enum Vault {
@@ -74,6 +76,7 @@ public enum Vault {
 }
 
 public extension VaultStore {
+    func dropCache() {}
     func load() throws -> [VaultSecret] { try load(includeReserved: false) }
 }
 
@@ -98,14 +101,35 @@ public struct KeychainVaultStore: VaultStore {
          kSecAttrAccount as String: Vault.account]
     }
 
+    /// Date de modification de l'élément : un attribut, lisible SANS autorisation du trousseau (≈ 7 ms),
+    /// alors que lire la valeur déclenche la demande d'autorisation (plusieurs secondes, une boîte de dialogue).
+    private func modificationDate() -> Date? {
+        var q = base
+        q[kSecReturnAttributes as String] = true
+        q[kSecMatchLimit as String] = kSecMatchLimitOne
+        var out: CFTypeRef?
+        guard SecItemCopyMatching(q as CFDictionary, &out) == errSecSuccess else { return nil }
+        return (out as? [String: Any])?[kSecAttrModificationDate as String] as? Date
+    }
+
+    /// Une seule lecture de la valeur par changement de l'élément. Le cache n'est fiable que si l'élément était
+    /// déjà stable (≥ 2 s) quand on l'a lu : une écriture ultérieure d'un autre processus change alors forcément
+    /// la date, même dans la même seconde que la précédente.
     private func readAll() throws -> [VaultSecret] {
+        let mdat = modificationDate()
+        if let mdat, let c = ItemCache.shared.get(service), c.mdat == mdat, c.readAt.timeIntervalSince(mdat) >= 2 {
+            return try Vault.decode(c.data, includeReserved: true)
+        }
         var q = base
         q[kSecReturnData as String] = true
         q[kSecMatchLimit as String] = kSecMatchLimitOne
         var out: CFTypeRef?
         let rc = SecItemCopyMatching(q as CFDictionary, &out)
-        if rc == errSecItemNotFound { return [] }
+        if rc == errSecItemNotFound { ItemCache.shared.set(service, nil); return [] }
         guard rc == errSecSuccess, let data = out as? Data else { throw VaultError.keychain(rc) }
+        // La date lue AVANT les données : si l'élément change entre les deux, la date mémorisée est plus
+        // ancienne que la réalité, donc le prochain passage relira (sûr).
+        ItemCache.shared.set(service, mdat.map { CachedItem(data: data, mdat: $0, readAt: Date()) })
         return try Vault.decode(data, includeReserved: true)
     }
 
@@ -117,7 +141,10 @@ public struct KeychainVaultStore: VaultStore {
             rc = SecItemAdd(add as CFDictionary, nil)
         }
         guard rc == errSecSuccess else { throw VaultError.keychain(rc) }
+        ItemCache.shared.set(service, nil)      // la date a changé : la prochaine lecture relira la valeur
     }
+
+    public func dropCache() { ItemCache.shared.set(service, nil) }
 
     public func load(includeReserved: Bool) throws -> [VaultSecret] {
         let all = try readAll()
@@ -143,6 +170,17 @@ public struct KeychainVaultStore: VaultStore {
         }
         return visible
     }
+}
+
+struct CachedItem { let data: Data; let mdat: Date; let readAt: Date }
+
+/// Mémoire du processus (jamais sur disque) : la valeur brute du coffre, indexée par service.
+final class ItemCache: @unchecked Sendable {
+    static let shared = ItemCache()
+    private let lock = NSLock()
+    private var items: [String: CachedItem] = [:]
+    func get(_ s: String) -> CachedItem? { lock.lock(); defer { lock.unlock() }; return items[s] }
+    func set(_ s: String, _ v: CachedItem?) { lock.lock(); items[s] = v; lock.unlock() }
 }
 
 /// Verrou exclusif entre processus : le même fichier que la CLI (flock).

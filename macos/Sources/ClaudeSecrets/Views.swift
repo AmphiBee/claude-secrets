@@ -415,7 +415,7 @@ struct BwSetupSheet: View {
             TextField("Adresse e-mail", text: $f.email).textFieldStyle(.roundedBorder).textContentType(.username)
             SecureField("Mot de passe maître", text: $f.password).textFieldStyle(.roundedBorder)
             TextField("Code à deux facteurs (si demandé)", text: $f.code).textFieldStyle(.roundedBorder)
-            TextField("Dossier à synchroniser", text: $f.folder).textFieldStyle(.roundedBorder)
+            TextField("Dossier à synchroniser", text: $f.folder, prompt: Text("Vide = tout le coffre · / = éléments sans dossier")).textFieldStyle(.roundedBorder)
             if let e = f.error { Label(e, systemImage: "exclamationmark.triangle").font(.caption).foregroundStyle(Theme.copper) }
         }
         .onAppear {

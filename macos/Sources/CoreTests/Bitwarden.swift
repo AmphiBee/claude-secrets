@@ -81,6 +81,26 @@ func runBitwardenTests(_ fixtures: URL) {
     check("dossier vide + prune : refusé, rien supprimé", { do { _ = try bw.sync(prune: true, folder: "Vide"); return false } catch { return "\(error)".contains("vide") } }())
     check("dossier inconnu : message clair", { do { _ = try bw.sync(folder: "Inexistant"); return false } catch { return "\(error)".contains("n'existe pas") } }())
 
+    // tout le coffre (dossier vide) et racine (« / »)
+    var v2 = try! JSONSerialization.jsonObject(with: Data(contentsOf: vaultFile)) as! [String: Any]
+    var its2 = v2["items"] as! [[String: Any]]
+    its2.append(["id": "iroot", "folderId": NSNull(), "name": "ZZTEST Racine", "login": ["username": "", "password": "racine-fictif", "uris": []], "fields": []])
+    v2["items"] = its2
+    try! JSONSerialization.data(withJSONObject: v2).write(to: vaultFile)
+    let onlyRoot = try? bw.sync(folder: "/")
+    check("« / » : seuls les éléments sans dossier", onlyRoot?.added == ["ZZTEST_RACINE"])
+    check("origine de la racine : bitwarden:/", ((try? store.load()) ?? []).first { $0.name == "ZZTEST_RACINE" }?.source == "bitwarden:/")
+    let everything = try? bw.sync(folder: "")
+    let expectedAll = BitwardenClient.map((v2["items"] as! [[String: Any]]).map(BwItem.init))
+    check("dossier vide : tout le coffre, tous dossiers confondus (\(Set(expectedAll.map(\.name)).count) secrets)",
+          everything?.total == Set(expectedAll.map(\.name)).count && (everything?.total ?? 0) > (onlyRoot?.total ?? 0))
+    check("origine de « tout le coffre » : bitwarden:*", ((try? store.load()) ?? []).first { $0.name == "ZZTEST_RACINE" }?.source == "bitwarden:*")
+    BitwardenClient.setConf(["folder": ""])
+    check("réglage vide conservé (pas de retour au dossier par défaut)", BitwardenClient.configuredFolder == "")
+    BitwardenClient.setConf(["folder": nil])
+    check("réglage absent : dossier par défaut", BitwardenClient.configuredFolder == bwDefaultFolder)
+    BitwardenClient.setConf(["folder": "Claude Secrets"])
+
     // serveurs plus anciens que le CLI
     try? bw.forgetSession(); _ = try? bw.run(["lock"])
     setenv("FAKE_BW_MIGRATOR_UNLOCK", "1", 1)

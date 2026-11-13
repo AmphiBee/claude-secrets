@@ -182,6 +182,126 @@
     "password": "p"
    },
    "name": "---"
+  },
+  {
+   "creationDate": "2024-01-01",
+   "fields": [],
+   "id": "a1",
+   "login": {
+    "password": "p1",
+    "username": "jean@x.fr"
+   },
+   "name": "Hubspot"
+  },
+  {
+   "creationDate": "2024-02-01",
+   "fields": [],
+   "id": "a2",
+   "login": {
+    "password": "p2",
+    "username": "marie@y.fr"
+   },
+   "name": "Hubspot"
+  },
+  {
+   "creationDate": "2024-03-01",
+   "fields": [],
+   "id": "a3",
+   "login": {
+    "password": "p3"
+   },
+   "name": "Hubspot"
+  },
+  {
+   "creationDate": "2020-01-01",
+   "fields": [],
+   "id": "z9",
+   "login": {
+    "password": "p4"
+   },
+   "name": "Hubspot Marie"
+  },
+  {
+   "creationDate": "2023-01-01",
+   "fields": [],
+   "id": "b1",
+   "login": {
+    "password": "p",
+    "username": "boss@a.fr"
+   },
+   "name": "Shop"
+  },
+  {
+   "creationDate": "2023-02-01",
+   "fields": [],
+   "id": "b2",
+   "login": {
+    "password": "p",
+    "username": "dupont@a.fr"
+   },
+   "name": "Shop"
+  },
+  {
+   "creationDate": "2023-03-01",
+   "fields": [],
+   "id": "b3",
+   "login": {
+    "password": "p",
+    "username": "dupont@b.fr"
+   },
+   "name": "Shop"
+  },
+  {
+   "creationDate": "2023-04-01",
+   "fields": [
+    {
+     "name": "Api Key",
+     "type": 1,
+     "value": "k"
+    }
+   ],
+   "id": "b4",
+   "login": {
+    "password": "q",
+    "username": "dupont@b.fr"
+   },
+   "name": "Shop"
+  },
+  {
+   "creationDate": "2022-01-01",
+   "fields": [],
+   "id": "c1",
+   "login": {
+    "password": "p"
+   },
+   "name": "Même ordre"
+  },
+  {
+   "creationDate": "2022-01-01",
+   "fields": [],
+   "id": "c2",
+   "login": {
+    "password": "q"
+   },
+   "name": "Même ordre"
+  },
+  {
+   "creationDate": "2021-01-01",
+   "fields": [],
+   "id": "d1",
+   "login": {
+    "username": "x"
+   },
+   "name": "Sans secret"
+  },
+  {
+   "creationDate": "2021-02-01",
+   "fields": [],
+   "id": "d2",
+   "login": {
+    "password": "p"
+   },
+   "name": "Sans secret"
   }
  ],
  "map": [
@@ -257,6 +377,96 @@
   ],
   [
    "T_CAF",
+   "p",
+   true
+  ],
+  [
+   "HUBSPOT_USER",
+   "jean@x.fr",
+   true
+  ],
+  [
+   "HUBSPOT_PASSWORD",
+   "p1",
+   true
+  ],
+  [
+   "HUBSPOT_MARIE_A2_USER",
+   "marie@y.fr",
+   true
+  ],
+  [
+   "HUBSPOT_MARIE_A2_PASSWORD",
+   "p2",
+   true
+  ],
+  [
+   "HUBSPOT_A3",
+   "p3",
+   true
+  ],
+  [
+   "HUBSPOT_MARIE",
+   "p4",
+   true
+  ],
+  [
+   "SHOP_USER",
+   "boss@a.fr",
+   true
+  ],
+  [
+   "SHOP_PASSWORD",
+   "p",
+   true
+  ],
+  [
+   "SHOP_DUPONT_A_FR_USER",
+   "dupont@a.fr",
+   true
+  ],
+  [
+   "SHOP_DUPONT_A_FR_PASSWORD",
+   "p",
+   true
+  ],
+  [
+   "SHOP_B3_USER",
+   "dupont@b.fr",
+   true
+  ],
+  [
+   "SHOP_B3_PASSWORD",
+   "p",
+   true
+  ],
+  [
+   "SHOP_B4_USER",
+   "dupont@b.fr",
+   true
+  ],
+  [
+   "SHOP_B4_PASSWORD",
+   "q",
+   true
+  ],
+  [
+   "SHOP_B4_API_KEY",
+   "k",
+   true
+  ],
+  [
+   "M_ME_ORDRE",
+   "p",
+   true
+  ],
+  [
+   "M_ME_ORDRE_C2",
+   "q",
+   true
+  ],
+  [
+   "SANS_SECRET",
    "p",
    true
   ]

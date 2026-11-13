@@ -27,7 +27,7 @@ struct SettingsView: View {
             SwiftUI.Section("Bitwarden") {
                 if model.bwConfigured {
                     LabeledContent("Compte", value: model.bwEmail ?? "")
-                    TextField("Dossier synchronisé", text: $f.folder)
+                    TextField("Dossier synchronisé", text: $f.folder, prompt: Text("Vide = tout le coffre · / = éléments sans dossier"))
                         .onSubmit { BitwardenClient.setConf(["folder": f.folder.trimmingCharacters(in: .whitespaces)]); model.objectWillChange.send() }
                     Toggle("Synchronisation automatique", isOn: Binding(
                         get: { model.autoSyncEnabled }, set: { model.setAutoSync($0) }))

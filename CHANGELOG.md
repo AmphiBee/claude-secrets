@@ -21,8 +21,23 @@ Une application native pour macOS (SwiftUI), dans `macos/`.
 - `make mac` assemble `ClaudeSecrets.app` (Command Line Tools seulement, signature ad hoc et
   hardened runtime). Le service de trousseau se surcharge par `CLAUDE_SECRETS_SERVICE` et l'état par
   `CLAUDE_SECRETS_STATE`, ce qui permet de tout tester sans toucher au vrai coffre.
-- Limite connue : relire un coffre écrit par un autre programme prend quelques secondes (évaluation
-  du trousseau à chaque changement d'écrivain), d'où une lecture unique au lancement.
+- **Dossier Bitwarden vide = tout le coffre** (tous dossiers confondus) ; `/` = les éléments sans dossier
+  (`bw list items --folderid null`) ; sinon le dossier de ce nom. Dans l'application comme dans la CLI
+  (`bw-setup` : `*` pour tout le coffre, `/` pour la racine). Origines : `bitwarden:*` et `bitwarden:/`.
+  Le réglage vide est conservé (il ne revient plus au dossier par défaut) ; seule l'absence de réglage
+  donne « Claude Secrets ».
+- **Éléments de même nom : plus d'écrasement.** Plusieurs comptes sur un même site (même nom d'élément)
+  donnaient les mêmes variables, et le dernier écrasait les autres (sur un vrai coffre de 442 éléments,
+  une centaine d'accès différents étaient perdus). Le plus ancien garde le nom simple, donc rien ne
+  change pour ce qui existe ; les autres reçoivent un suffixe stable : leur identifiant (`HUBSPOT_MARIE_USER`,
+  d'abord la partie avant le `@`, puis l'adresse entière), à défaut un repère tiré de l'identifiant interne
+  de l'élément (`HUBSPOT_A3F9C2D1`). Même règle dans la CLI et dans l'application (vérifiée contre le
+  script Python par `make mac-test`). `macos/Tools/bw-census.py` compte les collisions sans rien afficher
+  de secret.
+- **Une seule demande d'autorisation du trousseau** : la valeur du coffre n'est relue que si la date de
+  modification de l'élément a changé (cette date se lit sans autorisation). Au lancement, l'application
+  ne demande donc l'accès qu'une fois (zéro avec « Toujours autoriser »), au lieu d'une fois par lecture.
+- Limite connue : relire un coffre écrit par un autre programme prend quelques secondes (c'est la demande d'autorisation du trousseau), d'où une lecture unique au lancement.
 
 ## 1.12.0
 

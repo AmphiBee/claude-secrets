@@ -70,8 +70,12 @@ if a[:1] == ["sync"]:
 if a[:2] == ["list", "folders"]:
     print(json.dumps(VAULT["folders"])); sys.exit(0)
 if a[:2] == ["list", "items"]:
+    if "--folderid" not in a:        # sans filtre : tout le coffre
+        print(json.dumps(VAULT["items"])); sys.exit(0)
     fid = a[a.index("--folderid") + 1]
-    print(json.dumps([i for i in VAULT["items"] if i.get("folderId") == fid]))
+    # « null » : éléments sans dossier (la racine), comme bw
+    print(json.dumps([i for i in VAULT["items"]
+                      if (i.get("folderId") or "null") == fid]))
     sys.exit(0)
 
 print("commande inconnue: " + " ".join(a), file=sys.stderr)

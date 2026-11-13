@@ -142,6 +142,19 @@ BW_ITEMS = [
     {"name": "Impots", "login": {"username": "u", "password": "p", "uris": [{"uri": "https://cfspart.impots.gouv.fr/x"}]}, "fields": []},
     {"name": "Été & café", "login": {"password": "p"}, "fields": []},
     {"name": "---", "login": {"password": "p"}, "fields": []},
+    # Éléments de même nom : le plus ancien garde le nom simple, les autres un suffixe stable.
+    {"id": "a1", "creationDate": "2024-01-01", "name": "Hubspot", "login": {"username": "jean@x.fr", "password": "p1"}, "fields": []},
+    {"id": "a2", "creationDate": "2024-02-01", "name": "Hubspot", "login": {"username": "marie@y.fr", "password": "p2"}, "fields": []},
+    {"id": "a3", "creationDate": "2024-03-01", "name": "Hubspot", "login": {"password": "p3"}, "fields": []},
+    {"id": "z9", "creationDate": "2020-01-01", "name": "Hubspot Marie", "login": {"password": "p4"}, "fields": []},
+    {"id": "b1", "creationDate": "2023-01-01", "name": "Shop", "login": {"username": "boss@a.fr", "password": "p"}, "fields": []},
+    {"id": "b2", "creationDate": "2023-02-01", "name": "Shop", "login": {"username": "dupont@a.fr", "password": "p"}, "fields": []},
+    {"id": "b3", "creationDate": "2023-03-01", "name": "Shop", "login": {"username": "dupont@b.fr", "password": "p"}, "fields": []},
+    {"id": "b4", "creationDate": "2023-04-01", "name": "Shop", "login": {"username": "dupont@b.fr", "password": "q"}, "fields": [f("Api Key", "k")]},
+    {"id": "c1", "creationDate": "2022-01-01", "name": "Même ordre", "login": {"password": "p"}, "fields": []},
+    {"id": "c2", "creationDate": "2022-01-01", "name": "Même ordre", "login": {"password": "q"}, "fields": []},
+    {"id": "d1", "creationDate": "2021-01-01", "name": "Sans secret", "login": {"username": "x"}, "fields": []},
+    {"id": "d2", "creationDate": "2021-02-01", "name": "Sans secret", "login": {"password": "p"}, "fields": []},
 ]
 (OUT / "bw.json").write_text(json.dumps({
     "items": BW_ITEMS,

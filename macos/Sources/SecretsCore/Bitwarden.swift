@@ -201,7 +201,14 @@ public struct BitwardenClient: Sendable {
 
     // MARK: éléments → secrets
 
+    /// Dossier configuré : une chaîne vide est un choix (la racine) ; seule l'absence de réglage donne le défaut.
+    public static var configuredFolder: String { (conf()["folder"] as? String) ?? bwDefaultFolder }
+
+    /// Vide = tout le coffre (tous dossiers) ; « / » = éléments sans dossier ; sinon le dossier de ce nom.
+    public static func folderLabel(_ f: String) -> String { f.isEmpty ? "tout le coffre" : f == "/" ? "la racine" : f }
+
     func folderId(session: String, name: String) throws -> String {
+        if name == "/" { return "null" }          // racine : éléments sans dossier
         let r = try run(["list", "folders"], session: session)
         guard r.rc == 0 else { throw BwError(r.err.isEmpty ? "impossible de lister les dossiers" : r.err) }
         let folders = (try? JSONSerialization.jsonObject(with: Data((r.out.isEmpty ? "[]" : r.out).utf8))) as? [[String: Any]] ?? []
@@ -212,8 +219,9 @@ public struct BitwardenClient: Sendable {
     }
 
     func items(session: String, folder: String) throws -> [BwItem] {
-        let id = try folderId(session: session, name: folder)
-        let r = try run(["list", "items", "--folderid", id], session: session)
+        let blank = folder.trimmingCharacters(in: .whitespaces).isEmpty
+        let args = blank ? ["list", "items"] : ["list", "items", "--folderid", try folderId(session: session, name: folder)]
+        let r = try run(args, session: session)
         guard r.rc == 0 else { throw BwError(r.err.isEmpty ? "impossible de lister les éléments" : r.err) }
         let arr = (try? JSONSerialization.jsonObject(with: Data((r.out.isEmpty ? "[]" : r.out).utf8))) as? [[String: Any]] ?? []
         return arr.map(BwItem.init)
@@ -233,33 +241,96 @@ public struct BitwardenClient: Sendable {
         return s
     }
 
-    /// Port de bw_map : nom → variable ; identifiant + mot de passe → paire ; champs masqués → NOM_CHAMP.
+    struct NamedField { let name: String; let f: [String: Any] }
+
+    static func namedFields(_ it: BwItem) -> [NamedField] {
+        var out: [NamedField] = []
+        for f in it.fields {
+            if let n = (f["name"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines), !n.isEmpty { out.append(NamedField(name: n, f: f)) }
+        }
+        return out
+    }
+
+    /// Nom de base brut : le champ « claude_secrets_name », sinon le nom de l'élément.
+    static func itemBase(_ it: BwItem) -> String {
+        let forced = namedFields(it).last { $0.name == bwNameField }?.f["value"] as? String
+        return slug(forced.flatMap { $0.isEmpty ? nil : $0 } ?? it.name)
+    }
+
+    /// Repère court et stable tiré de l'identifiant interne de l'élément.
+    static func tag(_ it: BwItem) -> String {
+        let id = (it.raw["id"] as? String) ?? ""
+        let t = String(id.unicodeScalars.filter { ($0.value >= 48 && $0.value <= 57) || ($0.value >= 65 && $0.value <= 90) || ($0.value >= 97 && $0.value <= 122) }
+            .map(Character.init).prefix(8)).uppercased()
+        return t.isEmpty ? "X" : t
+    }
+
+    /// Nom de base de chaque élément (nil s'il ne donne aucun secret). Plusieurs éléments peuvent porter le même
+    /// nom (plusieurs comptes d'un même site) : sans précaution ils écraseraient les mêmes variables. Le plus
+    /// ancien garde le nom simple (ce qui existe déjà ne change pas) ; les autres reçoivent un suffixe stable :
+    /// leur identifiant (avant le « @ », puis en entier), à défaut un repère tiré de l'identifiant interne.
+    public static func bases(_ items: [BwItem]) -> [String?] {
+        let raw = items.map(itemBase)
+        let live = items.indices.filter { !raw[$0].isEmpty && !mapItem(items[$0], base: raw[$0]).isEmpty }
+        var order: [String] = []
+        var groups: [String: [Int]] = [:]
+        for i in live { if groups[raw[i]] == nil { order.append(raw[i]) }; groups[raw[i], default: []].append(i) }
+        func sortKey(_ i: Int) -> (String, String) { ((items[i].raw["creationDate"] as? String) ?? "", (items[i].raw["id"] as? String) ?? "") }
+        func before(_ a: Int, _ b: Int) -> Bool { let x = sortKey(a), y = sortKey(b); return x.0 != y.0 ? codePointLess(x.0, y.0) : codePointLess(x.1, y.1) }
+        var final: [Int: String] = [:]
+        for i in live { final[i] = raw[i] }
+        var renamed: [Int] = []
+        for base in order {
+            let idxs = groups[base]!.sorted(by: before)
+            if idxs.count < 2 { continue }
+            let rest = Array(idxs.dropFirst())
+            func user(_ i: Int) -> String { ((items[i].login["username"] as? String) ?? "").trimmingCharacters(in: .whitespacesAndNewlines) }
+            var tier1: [Int: String] = [:], tier2: [Int: String] = [:]
+            for i in rest { tier1[i] = slug(user(i).components(separatedBy: "@")[0]); tier2[i] = slug(user(i)) }
+            for i in rest {
+                let c1 = rest.filter { tier1[$0] == tier1[i] }.count, c2 = rest.filter { tier2[$0] == tier2[i] }.count
+                let suffix = (!tier1[i]!.isEmpty && c1 == 1) ? tier1[i]! : (!tier2[i]!.isEmpty && c2 == 1) ? tier2[i]! : tag(items[i])
+                final[i] = "\(base)_\(suffix)"
+                renamed.append(i)
+            }
+        }
+        var taken = Set(live.filter { !renamed.contains($0) }.map { final[$0]! })
+        for i in renamed.sorted(by: before) {
+            if taken.contains(final[i]!) { final[i] = "\(final[i]!)_\(tag(items[i]))" }   // repère en dernier recours
+            taken.insert(final[i]!)
+        }
+        return items.indices.map { final[$0] }
+    }
+
+    /// Secrets d'un élément sous le nom de base donné : paire, champs masqués, note.
+    static func mapItem(_ it: BwItem, base: String) -> [(name: String, value: String, exported: Bool)] {
+        let fields = namedFields(it)
+        func field(_ n: String) -> [String: Any]? { fields.last { $0.name == n }?.f }
+        var exported = true
+        if let m = (field(bwExportField)?["value"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
+           ["false", "0", "non", "no"].contains(m) { exported = false }
+        var out: [(String, String, Bool)] = []
+        let user = ((it.login["username"] as? String) ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let pwd = (it.login["password"] as? String) ?? ""
+        if !pwd.isEmpty && !user.isEmpty { out.append(("\(base)_USER", user, exported)); out.append(("\(base)_PASSWORD", pwd, exported)) }
+        else if !pwd.isEmpty { out.append((base, pwd, exported)) }
+        var done = Set<String>()
+        for (fname, _) in fields.map({ ($0.name, $0.f) }) where done.insert(fname).inserted {   // dernier champ de ce nom gagne
+            if fname == bwNameField || fname == bwExportField { continue }
+            let f = field(fname)!
+            guard (f["type"] as? Int) == 1, let v = f["value"] as? String, !v.isEmpty else { continue }
+            out.append(("\(base)_\(slug(fname))", v, exported))
+        }
+        let note = it.notes.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !note.isEmpty && pwd.isEmpty && fields.isEmpty { out.append((base, note, exported)) }
+        return out
+    }
+
+    /// Traduit les éléments Bitwarden en secrets (nom → variable, paire _USER/_PASSWORD, champs masqués NOM_CHAMP).
+    /// Les éléments de même nom ne s'écrasent pas : voir `bases`.
     public static func map(_ items: [BwItem]) -> [(name: String, value: String, exported: Bool)] {
         var out: [(String, String, Bool)] = []
-        for it in items {
-            var fields: [(name: String, f: [String: Any])] = []
-            for f in it.fields { if let n = (f["name"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines), !n.isEmpty { fields.append((n, f)) } }
-            func field(_ n: String) -> [String: Any]? { fields.last { $0.name == n }?.f }
-            let forced = field(bwNameField)?["value"] as? String
-            let base = slug(forced.flatMap { $0.isEmpty ? nil : $0 } ?? it.name)
-            if base.isEmpty { continue }
-            var exported = true
-            if let m = (field(bwExportField)?["value"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
-               ["false", "0", "non", "no"].contains(m) { exported = false }
-            let user = ((it.login["username"] as? String) ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-            let pwd = (it.login["password"] as? String) ?? ""
-            if !pwd.isEmpty && !user.isEmpty { out.append(("\(base)_USER", user, exported)); out.append(("\(base)_PASSWORD", pwd, exported)) }
-            else if !pwd.isEmpty { out.append((base, pwd, exported)) }
-            var done = Set<String>()
-            for (fname, _) in fields where done.insert(fname).inserted {
-                if fname == bwNameField || fname == bwExportField { continue }
-                let f = field(fname)!
-                guard (f["type"] as? Int) == 1, let v = f["value"] as? String, !v.isEmpty else { continue }
-                out.append(("\(base)_\(slug(fname))", v, exported))
-            }
-            let note = it.notes.trimmingCharacters(in: .whitespacesAndNewlines)
-            if !note.isEmpty && pwd.isEmpty && fields.isEmpty { out.append((base, note, exported)) }
-        }
+        for (it, base) in zip(items, bases(items)) { if let base { out += mapItem(it, base: base) } }
         return out
     }
 
@@ -279,9 +350,9 @@ public struct BitwardenClient: Sendable {
 
     public static func domains(_ items: [BwItem]) -> [String: String] {
         var out: [String: String] = [:]
-        for it in items {
-            guard let h = host(it) else { continue }
-            for (name, _, _) in map([it]) {
+        for (it, base) in zip(items, bases(items)) {
+            guard let base, let h = host(it) else { continue }
+            for (name, _, _) in mapItem(it, base: base) {
                 out[name] = h
                 for suffix in ["_USER", "_PASSWORD"] where name.hasSuffix(suffix) { out[String(name.dropLast(suffix.count))] = h }
             }
@@ -293,15 +364,15 @@ public struct BitwardenClient: Sendable {
 
     /// Synchronise le dossier Bitwarden vers le trousseau. `prune` ne retire que ce qui vient de ce dossier.
     public func sync(password: String? = nil, prune: Bool = false, folder: String? = nil) throws -> SyncReport {
-        let folder = folder ?? (Self.conf()["folder"] as? String).flatMap { $0.isEmpty ? nil : $0 } ?? bwDefaultFolder
+        let folder = folder ?? Self.configuredFolder
         let session = try session(password: password)
         _ = try run(["sync"], session: session)
         let items = try self.items(session: session, folder: folder)
         let mapped = Self.map(items)
         if prune && mapped.isEmpty {
-            throw BwError("Le dossier « \(folder) » est vide : suppression annulée. Un dossier vide ou mal nommé effacerait tout ce qui en vient.")
+            throw BwError("Le dossier « \(Self.folderLabel(folder)) » est vide : suppression annulée. Un dossier vide ou mal nommé effacerait tout ce qui en vient.")
         }
-        let origin = "bitwarden:\(folder)"
+        let origin = "bitwarden:\(folder.isEmpty ? "*" : folder)"
         let box = ReportBox()
         // Tout se calcule DANS la transaction, sur les données verrouillées et relues : une modification
         // faite entre-temps (dans l'app ou la CLI) n'est jamais écrasée par une photo plus ancienne.

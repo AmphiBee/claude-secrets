@@ -110,7 +110,7 @@ final class VaultModel: ObservableObject {
 
     /// Masquage prolongé : on relâche aussi les valeurs de la mémoire.
     func releaseValues() {
-        hide(); trash = [:]; entries = []; lastSync = nil; sections = []; taxonomy = Taxonomy([]); phase = .loading; loadedAt = nil
+        hide(); store.dropCache(); trash = [:]; entries = []; lastSync = nil; sections = []; taxonomy = Taxonomy([]); phase = .loading; loadedAt = nil
     }
 
     // MARK: affichage

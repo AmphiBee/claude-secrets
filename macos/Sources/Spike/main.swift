@@ -66,6 +66,15 @@ case "read":
     var n = -1
     if let d = res.1, let j = try? JSONSerialization.jsonObject(with: d) as? [String: Any] { n = j.count }
     print("read rc=\(res.0) entrées=\(n) temps=\(String(format: "%.1f", t)) ms")
+case "attrs":   // attributs seuls (date de modification), sans la valeur
+    var q = base()
+    q[kSecReturnAttributes as String] = true
+    q[kSecMatchLimit as String] = kSecMatchLimitOne
+    var out: CFTypeRef?
+    var rc: OSStatus = 0
+    let t = ms { rc = SecItemCopyMatching(q as CFDictionary, &out) }
+    let d = (out as? [String: Any])?[kSecAttrModificationDate as String] as? Date
+    print("attrs rc=\(rc) mdat=\(d.map { "\($0)" } ?? "nil") temps=\(String(format: "%.1f", t)) ms")
 case "delete":
     print("delete rc=\(SecItemDelete(base() as CFDictionary))")
 default:

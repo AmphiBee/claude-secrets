@@ -413,7 +413,7 @@ redemandé. `claude-secrets bw-lock` ou `bw lock` la révoque immédiatement.
 
 ### Ce qui est importé
 
-Seuls les éléments du dossier choisi sont lus. Le nom de l'élément devient le
+Seuls les éléments du dossier choisi sont lus. Un dossier **vide** désigne tout le coffre, tous dossiers confondus ; `/` désigne les éléments qui n'ont pas de dossier (dans l'application macOS, laissez le champ vide ou mettez `/` ; avec `bw-setup`, répondez `*` pour tout le coffre). Le nom de l'élément devient le
 nom de la variable (`Cloudflare API` → `CLOUDFLARE_API`).
 
 | Dans Bitwarden | Devient |
@@ -422,6 +422,11 @@ nom de la variable (`Cloudflare API` → `CLOUDFLARE_API`).
 | Identifiant avec nom d'utilisateur + mot de passe | `NOM_USER` et `NOM_PASSWORD` |
 | Champ personnalisé **masqué** | `NOM_CHAMP` |
 | Champ personnalisé visible | ignoré |
+
+Si plusieurs éléments portent le même nom (plusieurs comptes sur un même site), le plus ancien
+garde `NOM` et les autres deviennent `NOM_IDENTIFIANT` (la partie avant le `@`, puis l'adresse
+entière), ou `NOM_` suivi d'un repère tiré de l'identifiant interne de l'élément à défaut.
+Aucun n'en écrase un autre.
 
 Deux champs personnalisés pilotent l'import :
 

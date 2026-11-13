@@ -7,7 +7,7 @@ extension VaultModel {
 
     var bwEmail: String? { BitwardenClient.conf()["email"] as? String }
     var bwConfigured: Bool { !(bwEmail ?? "").isEmpty }
-    var bwFolder: String { (BitwardenClient.conf()["folder"] as? String).flatMap { $0.isEmpty ? nil : $0 } ?? bwDefaultFolder }
+    var bwFolder: String { BitwardenClient.configuredFolder }     // vide = tout le coffre
     var autoSyncEnabled: Bool { (BitwardenClient.conf()["auto_sync"] as? Bool) ?? true }
 
     func setAutoSync(_ on: Bool) {
@@ -85,7 +85,7 @@ extension VaultModel {
                         session = try client.unlock(password: password)
                     }
                     try client.saveSession(session)
-                    BitwardenClient.setConf(["folder": folder.isEmpty ? bwDefaultFolder : folder])
+                    BitwardenClient.setConf(["folder": folder])      // vide = tout le coffre, on ne remet pas le défaut
                 }.value
                 done(nil)
                 sheet = nil
