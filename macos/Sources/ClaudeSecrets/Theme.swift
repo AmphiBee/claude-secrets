@@ -33,7 +33,7 @@ enum Theme {
                 a.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? c(s, dark) : c(s, light)
             })
         }
-        return (pair(0.62, 0.90, 0.22), pair(0.52, 0.74, 0.36), pair(0.66, 0.26, 0.86))
+        return (pair(0.42, 0.91, 0.22), pair(0.34, 0.78, 0.36), pair(0.55, 0.28, 0.86))
     }
 }
 
