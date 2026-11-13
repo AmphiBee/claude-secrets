@@ -36,7 +36,7 @@ struct ContentView: View {
                     Text(t.text).font(.callout)
                     if let label = t.actionLabel, let key = t.actionKey {
                         Button(label) { model.undo(key) }.buttonStyle(.plain).fontWeight(.bold)
-                            .underline().foregroundStyle(Theme.spark)
+                            .underline().foregroundStyle(Theme.toastAccent)
                     }
                 }
                 .padding(.horizontal, 14).padding(.vertical, 8)
@@ -46,7 +46,7 @@ struct ContentView: View {
             }
         }
         .animation(.easeOut(duration: 0.18), value: model.toast)
-        .onAppear { model.load() }
+        .onAppear { model.load(); model.replayEntrance() }
         .sheet(item: $model.sheet) { sheet in
             switch sheet {
             case .newSecret: SecretSheet(model: model, editing: nil)
@@ -147,6 +147,7 @@ func indexLetter(_ s: Section) -> String {
 
 struct SectionList: View {
     @ObservedObject var model: VaultModel
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         ScrollView {
@@ -155,6 +156,11 @@ struct SectionList: View {
                     let letter = indexLetter(s)
                     let first = !letter.isEmpty && (i == 0 || indexLetter(model.sections[i - 1]) != letter)
                     GroupRow(model: model, section: s, letter: first ? letter : nil)
+                        .opacity(model.entered || reduceMotion ? 1 : 0)
+                        .offset(y: model.entered || reduceMotion ? 0 : 8)
+                        // décélération exponentielle, jamais de rebond ; seules les 14 premières lignes sont échelonnées
+                        .animation(reduceMotion ? nil : .timingCurve(0.16, 1, 0.3, 1, duration: 0.55).delay(Double(min(i, 14)) * 0.03),
+                                   value: model.entered)
                     Rectangle().fill(Theme.rule).frame(height: 1)
                 }
             }
@@ -251,7 +257,7 @@ struct EntryRow: View {
             Button { model.copy(entry) } label: { Image(systemName: "doc.on.doc") }
                 .help("Copier (effacé après 45 s)").accessibilityLabel("Copier la valeur")
             Menu {
-                if entry.kind != .aws { Button("Modifier…") { model.sheet = .edit(entry) } }
+                if entry.kind != .aws { Button("Modifier…") { model.edit(entry) } }
                 if model.mode == .service { Button("Changer de groupe…") { model.sheet = .group(entry) } }
                 Divider()
                 Button("Supprimer", role: .destructive) { model.delete(entry) }

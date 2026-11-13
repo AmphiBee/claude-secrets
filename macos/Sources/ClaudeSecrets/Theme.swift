@@ -16,8 +16,10 @@ enum Theme {
     static let rule = dynamic((222, 213, 197), (66, 59, 52))
     static let ink = dynamic((43, 36, 30), (237, 229, 216))
     static let inkSoft = dynamic((107, 95, 82), (176, 165, 150))      // AA sur le papier, clair et sombre
-    static let copper = dynamic((185, 87, 58), (246, 169, 116))       // #B9573A / #F6A974
+    static let copper = dynamic((176, 82, 53), (246, 169, 116))        // #B9573A assombri à 4,5:1 sur le papier / #F6A974
     static let copperDeep = Color(red: 0x8E / 255, green: 0x3E / 255, blue: 0x28 / 255)
+    /// Action du toast (fond = encre) : étincelle en clair, cuivre profond en sombre (le toast y est clair).
+    static let toastAccent = dynamic((255, 244, 210), (142, 62, 40))
     static let spark = Color(red: 1, green: 0xF4 / 255, blue: 0xD2 / 255)
 
     static func title(_ size: CGFloat) -> Font { .system(size: size, weight: .semibold, design: .serif) }

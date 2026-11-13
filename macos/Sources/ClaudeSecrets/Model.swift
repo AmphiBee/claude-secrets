@@ -47,6 +47,8 @@ final class VaultModel: ObservableObject {
     @Published var sheet: ActiveSheet?
     @Published var confirmAWS: Entry?
     @Published var syncing = false
+    let auth = AuthGuard()
+    @Published var entered = false
     var lastSync: Date?
     var autoErrorShown = false
 
@@ -91,12 +93,19 @@ final class VaultModel: ObservableObject {
         loadedAt = Date()
         phase = .ready
         rebuild()
+        replayEntrance()
         if lastSync == nil { Task { try? await Task.sleep(for: .seconds(1.5)); autoSync() } }
+    }
+
+    /// Entrée orchestrée : les lignes apparaissent l'une après l'autre, une seule fois par ouverture.
+    func replayEntrance() {
+        guard !entered else { return }
+        Task { try? await Task.sleep(for: .milliseconds(40)); entered = true }
     }
 
     /// Ferme tout et libère les valeurs : appelé quand la fenêtre est masquée.
     func hide() {
-        query = ""; expanded = []; revealed = []; toast = nil; sheet = nil; confirmAWS = nil
+        query = ""; expanded = []; revealed = []; toast = nil; sheet = nil; confirmAWS = nil; entered = false; auth.reset()
     }
 
     /// Masquage prolongé : on relâche aussi les valeurs de la mémoire.
@@ -155,14 +164,25 @@ final class VaultModel: ObservableObject {
     // MARK: actions
 
     func copy(_ e: Entry) {
+        auth.authorize("copier une valeur du coffre", failed: { [weak self] in self?.flash($0) }) { [self] in doCopy(e) }
+    }
+
+    private func doCopy(_ e: Entry) {
         Clipboard.copy(e.value)
         flash(e.kind == .pair ? "Mot de passe copié · presse-papier vidé dans 45 s" : "Copié · presse-papier vidé dans 45 s")
     }
 
     func copyUser(_ e: Entry) {
         guard let u = e.user else { return }
-        Clipboard.copy(u)
-        flash("Identifiant copié · presse-papier vidé dans 45 s")
+        auth.authorize("copier un identifiant du coffre", failed: { [weak self] in self?.flash($0) }) { [self] in
+            Clipboard.copy(u)
+            flash("Identifiant copié · presse-papier vidé dans 45 s")
+        }
+    }
+
+    /// Ouvre la fenêtre de modification : elle montre la valeur, donc elle passe par le même garde.
+    func edit(_ e: Entry) {
+        auth.authorize("modifier une valeur du coffre", failed: { [weak self] in self?.flash($0) }) { [self] in sheet = .edit(e) }
     }
 
     /// ⏎ dans la recherche : copie le premier résultat.
@@ -171,7 +191,8 @@ final class VaultModel: ObservableObject {
     }
 
     func toggleReveal(_ e: Entry) {
-        if revealed.contains(e.base) { revealed.remove(e.base) } else { revealed.insert(e.base) }
+        if revealed.contains(e.base) { revealed.remove(e.base); return }
+        auth.authorize("afficher une valeur du coffre", failed: { [weak self] in self?.flash($0) }) { [self] in revealed.insert(e.base) }
     }
 
     func flash(_ text: String, seconds: Double = 3, action: (String, String)? = nil) {

@@ -1,5 +1,29 @@
 # Journal des versions
 
+## 1.13.0
+
+Une application native pour macOS (SwiftUI), dans `macos/`.
+
+- **Parité avec l'application GTK** : liste rangée par service (le regroupement est un port à
+  l'identique de `Taxonomy`, vérifié contre le script Python), recherche, valeurs masquées, copie
+  marquée confidentielle et effacée au bout de 45 s, fermer = masquer.
+- **Écriture** : nouveau, modifier, supprimer avec « Annuler » pendant 8 s (origine et export
+  conservés), import d'un `.env`, changer de groupe. Chaque écriture prend le verrou partagé avec la
+  ligne de commande, relit le coffre, écrit, puis régénère le cache des shells ; testé avec trois
+  processus Python et trois fils Swift qui écrivent en même temps, sans mise à jour perdue.
+- **Bitwarden et AWS** : connexion, déverrouillage et synchronisation (manuelle, puis automatique),
+  import des profils AWS avec `credential_process`. Le mot de passe maître et la clé de session ne
+  passent que par l'environnement de `bw`, jamais par un argument.
+- **Réglages** : Touch ID avant d'afficher ou de copier (réglable, désactivé par défaut),
+  Bitwarden, AWS.
+- **Design** : « papier & cuivre », clair et sombre, contrastes AA vérifiés par `make mac-test`,
+  entrée échelonnée des lignes (respecte « Réduire les animations »), icône `.icns`.
+- `make mac` assemble `ClaudeSecrets.app` (Command Line Tools seulement, signature ad hoc et
+  hardened runtime). Le service de trousseau se surcharge par `CLAUDE_SECRETS_SERVICE` et l'état par
+  `CLAUDE_SECRETS_STATE`, ce qui permet de tout tester sans toucher au vrai coffre.
+- Limite connue : relire un coffre écrit par un autre programme prend quelques secondes (évaluation
+  du trousseau à chaque changement d'écrivain), d'où une lecture unique au lancement.
+
 ## 1.12.0
 
 Paquets : un `.deb` et un AppImage.

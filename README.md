@@ -94,6 +94,32 @@ Linux avec session graphique uniquement. Ne fonctionne pas en SSH sans session
 ouverte (le trousseau n'est alors pas déverrouillé). Testé avec GTK 4.10 et
 libadwaita 1.3.
 
+### Sur macOS
+
+Une application native (SwiftUI) fait la même chose que celle de Linux : liste rangée par service,
+recherche, valeurs masquées, copie effacée au bout de 45 s, ajout, modification, suppression avec
+« Annuler », import d'un `.env`, synchronisation Bitwarden et profils AWS. Elle lit et écrit le **même
+élément de trousseau** que la ligne de commande : les deux cohabitent sans se gêner (verrou
+d'écriture partagé, relecture avant chaque écriture).
+
+Il faut les Command Line Tools d'Apple (`xcode-select --install`), pas Xcode :
+
+```bash
+make mac           # assemble macos/build/ClaudeSecrets.app (signature ad hoc, hardened runtime)
+make mac-test      # tests du cœur et contrastes AA, sans toucher au trousseau
+```
+
+Copiez ensuite `ClaudeSecrets.app` dans `/Applications`. À savoir :
+
+- **Première lecture** : relire un coffre écrit par un autre programme (la ligne de commande) prend
+  quelques secondes ; l'application ne le lit qu'une fois, puis garde tout en mémoire.
+- **Signature ad hoc** : elle change à chaque compilation, donc macOS redemande l'accès au trousseau
+  après une mise à jour (« Toujours autoriser »).
+- **Réglages** (`⌘,`) : Touch ID avant d'afficher ou de copier une valeur (désactivé par défaut),
+  Bitwarden, AWS. Fermer la fenêtre masque tout ; les valeurs sont relâchées de la mémoire après
+  5 minutes, et l'application quitte après 20.
+- Les instructions de développement et les résultats du spike sont dans `docs/macos/`.
+
 ---
 
 ## L'application

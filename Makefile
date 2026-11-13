@@ -1,6 +1,6 @@
 PREFIX ?= $(HOME)/.local
 
-.PHONY: install update uninstall check test version screenshots deb appimage packages
+.PHONY: install update uninstall check test version screenshots deb appimage packages mac mac-test
 
 install:
 	@./install.sh
@@ -32,3 +32,10 @@ appimage:
 	@./packaging/build-appimage.sh
 
 packages: deb appimage
+
+# Application macOS (Command Line Tools seulement) : voir macos/ et docs/macos/
+mac:
+	@./macos/Tools/build-app.sh release
+
+mac-test:
+	@cd macos && swift run core-tests && python3 Tools/contrast.py

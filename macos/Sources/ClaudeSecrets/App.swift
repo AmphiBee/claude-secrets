@@ -15,7 +15,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             MainActor.assumeIsolated { self?.windowHidden() }
         }
         NotificationCenter.default.addObserver(forName: NSWindow.didBecomeMainNotification, object: nil, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated { self?.releaseTask?.cancel(); self?.model?.load(); self?.model?.autoSync() }
+            MainActor.assumeIsolated { self?.releaseTask?.cancel(); self?.model?.load(); self?.model?.replayEntrance(); self?.model?.autoSync() }
         }
     }
 
@@ -41,7 +41,7 @@ struct ClaudeSecretsApp: App {
     @StateObject private var model = VaultModel()
 
     var body: some Scene {
-        WindowGroup("Claude Secrets") {
+        WindowGroup("Claude Secrets", id: "main") {
             ContentView(model: model)
                 .frame(minWidth: 560, minHeight: 480)
                 .onAppear { delegate.model = model }
@@ -63,5 +63,6 @@ struct ClaudeSecretsApp: App {
                 Button("Importer un .env…") { model.sheet = .importEnv }.keyboardShortcut("i").disabled(!model.isReady)
             }
         }
+        Settings { SettingsView(model: model) }
     }
 }
