@@ -1,0 +1,484 @@
+{
+ "domains": {
+  "ACME_MAIL": "acme.com",
+  "ACME_MAIL_PASSWORD": "acme.com",
+  "ACME_MAIL_USER": "acme.com",
+  "IMPOTS": "cfspart.impots.gouv.fr",
+  "IMPOTS_PASSWORD": "cfspart.impots.gouv.fr",
+  "IMPOTS_USER": "cfspart.impots.gouv.fr",
+  "MOBILE": "app.mobile.io"
+ },
+ "items": [
+  {
+   "fields": [],
+   "login": {
+    "password": "pw1",
+    "uris": [
+     {
+      "uri": "https://www.Acme.com/login"
+     }
+    ],
+    "username": "a@x.fr"
+   },
+   "name": "Acme Mail"
+  },
+  {
+   "fields": [],
+   "login": {
+    "password": "tok",
+    "uris": [],
+    "username": ""
+   },
+   "name": "Solo Token"
+  },
+  {
+   "fields": [
+    {
+     "name": "claude_secrets_export",
+     "type": 0,
+     "value": "Non"
+    }
+   ],
+   "login": {
+    "password": "p"
+   },
+   "name": "Hors env"
+  },
+  {
+   "fields": [
+    {
+     "name": "claude_secrets_name",
+     "type": 1,
+     "value": "mon-nom 1"
+    },
+    {
+     "name": "note",
+     "type": 0,
+     "value": "visible"
+    }
+   ],
+   "login": {
+    "password": "p"
+   },
+   "name": "Nom forcé"
+  },
+  {
+   "fields": [
+    {
+     "name": "Api Key",
+     "type": 1,
+     "value": "k1"
+    },
+    {
+     "name": "Visible",
+     "type": 0,
+     "value": "v"
+    },
+    {
+     "name": "Vide",
+     "type": 1,
+     "value": ""
+    },
+    {
+     "name": "api key",
+     "type": 1,
+     "value": "k2"
+    },
+    {
+     "name": "Api Key",
+     "type": 1,
+     "value": "k3"
+    }
+   ],
+   "login": {},
+   "name": "Champs"
+  },
+  {
+   "fields": [],
+   "login": {},
+   "name": "Note seule",
+   "notes": "  texte secret  "
+  },
+  {
+   "fields": [
+    {
+     "name": "A",
+     "type": 1,
+     "value": "1"
+    }
+   ],
+   "login": {},
+   "name": "Note + champ",
+   "notes": "ignorée"
+  },
+  {
+   "fields": [],
+   "login": {
+    "password": "p",
+    "uris": [
+     {
+      "uri": "http://192.168.1.10/x"
+     }
+    ]
+   },
+   "name": "123 chiffres"
+  },
+  {
+   "fields": [],
+   "login": {
+    "password": "p",
+    "uris": [
+     {
+      "uri": "androidapp://com.x"
+     },
+     {
+      "uri": "app.mobile.io"
+     }
+    ]
+   },
+   "name": "Mobile"
+  },
+  {
+   "fields": [],
+   "login": {
+    "password": "p",
+    "uris": [
+     {
+      "uri": "http://site.local"
+     },
+     {
+      "uri": "localhost:8080"
+     },
+     {
+      "uri": "http://x.test"
+     }
+    ]
+   },
+   "name": "Local"
+  },
+  {
+   "fields": [],
+   "login": {
+    "password": "p",
+    "uris": [
+     {
+      "uri": "https://cfspart.impots.gouv.fr/x"
+     }
+    ],
+    "username": "u"
+   },
+   "name": "Impots"
+  },
+  {
+   "fields": [],
+   "login": {
+    "password": "p"
+   },
+   "name": "Été & café"
+  },
+  {
+   "fields": [],
+   "login": {
+    "password": "p"
+   },
+   "name": "---"
+  },
+  {
+   "creationDate": "2024-01-01",
+   "fields": [],
+   "id": "a1",
+   "login": {
+    "password": "p1",
+    "username": "jean@x.fr"
+   },
+   "name": "Hubspot"
+  },
+  {
+   "creationDate": "2024-02-01",
+   "fields": [],
+   "id": "a2",
+   "login": {
+    "password": "p2",
+    "username": "marie@y.fr"
+   },
+   "name": "Hubspot"
+  },
+  {
+   "creationDate": "2024-03-01",
+   "fields": [],
+   "id": "a3",
+   "login": {
+    "password": "p3"
+   },
+   "name": "Hubspot"
+  },
+  {
+   "creationDate": "2020-01-01",
+   "fields": [],
+   "id": "z9",
+   "login": {
+    "password": "p4"
+   },
+   "name": "Hubspot Marie"
+  },
+  {
+   "creationDate": "2023-01-01",
+   "fields": [],
+   "id": "b1",
+   "login": {
+    "password": "p",
+    "username": "boss@a.fr"
+   },
+   "name": "Shop"
+  },
+  {
+   "creationDate": "2023-02-01",
+   "fields": [],
+   "id": "b2",
+   "login": {
+    "password": "p",
+    "username": "dupont@a.fr"
+   },
+   "name": "Shop"
+  },
+  {
+   "creationDate": "2023-03-01",
+   "fields": [],
+   "id": "b3",
+   "login": {
+    "password": "p",
+    "username": "dupont@b.fr"
+   },
+   "name": "Shop"
+  },
+  {
+   "creationDate": "2023-04-01",
+   "fields": [
+    {
+     "name": "Api Key",
+     "type": 1,
+     "value": "k"
+    }
+   ],
+   "id": "b4",
+   "login": {
+    "password": "q",
+    "username": "dupont@b.fr"
+   },
+   "name": "Shop"
+  },
+  {
+   "creationDate": "2022-01-01",
+   "fields": [],
+   "id": "c1",
+   "login": {
+    "password": "p"
+   },
+   "name": "Même ordre"
+  },
+  {
+   "creationDate": "2022-01-01",
+   "fields": [],
+   "id": "c2",
+   "login": {
+    "password": "q"
+   },
+   "name": "Même ordre"
+  },
+  {
+   "creationDate": "2021-01-01",
+   "fields": [],
+   "id": "d1",
+   "login": {
+    "username": "x"
+   },
+   "name": "Sans secret"
+  },
+  {
+   "creationDate": "2021-02-01",
+   "fields": [],
+   "id": "d2",
+   "login": {
+    "password": "p"
+   },
+   "name": "Sans secret"
+  }
+ ],
+ "map": [
+  [
+   "ACME_MAIL_USER",
+   "a@x.fr",
+   true
+  ],
+  [
+   "ACME_MAIL_PASSWORD",
+   "pw1",
+   true
+  ],
+  [
+   "SOLO_TOKEN",
+   "tok",
+   true
+  ],
+  [
+   "HORS_ENV",
+   "p",
+   false
+  ],
+  [
+   "MON_NOM_1",
+   "p",
+   true
+  ],
+  [
+   "CHAMPS_API_KEY",
+   "k3",
+   true
+  ],
+  [
+   "CHAMPS_API_KEY",
+   "k2",
+   true
+  ],
+  [
+   "NOTE_SEULE",
+   "texte secret",
+   true
+  ],
+  [
+   "NOTE_CHAMP_A",
+   "1",
+   true
+  ],
+  [
+   "X123_CHIFFRES",
+   "p",
+   true
+  ],
+  [
+   "MOBILE",
+   "p",
+   true
+  ],
+  [
+   "LOCAL",
+   "p",
+   true
+  ],
+  [
+   "IMPOTS_USER",
+   "u",
+   true
+  ],
+  [
+   "IMPOTS_PASSWORD",
+   "p",
+   true
+  ],
+  [
+   "T_CAF",
+   "p",
+   true
+  ],
+  [
+   "HUBSPOT_USER",
+   "jean@x.fr",
+   true
+  ],
+  [
+   "HUBSPOT_PASSWORD",
+   "p1",
+   true
+  ],
+  [
+   "HUBSPOT_MARIE_A2_USER",
+   "marie@y.fr",
+   true
+  ],
+  [
+   "HUBSPOT_MARIE_A2_PASSWORD",
+   "p2",
+   true
+  ],
+  [
+   "HUBSPOT_A3",
+   "p3",
+   true
+  ],
+  [
+   "HUBSPOT_MARIE",
+   "p4",
+   true
+  ],
+  [
+   "SHOP_USER",
+   "boss@a.fr",
+   true
+  ],
+  [
+   "SHOP_PASSWORD",
+   "p",
+   true
+  ],
+  [
+   "SHOP_DUPONT_A_FR_USER",
+   "dupont@a.fr",
+   true
+  ],
+  [
+   "SHOP_DUPONT_A_FR_PASSWORD",
+   "p",
+   true
+  ],
+  [
+   "SHOP_B3_USER",
+   "dupont@b.fr",
+   true
+  ],
+  [
+   "SHOP_B3_PASSWORD",
+   "p",
+   true
+  ],
+  [
+   "SHOP_B4_USER",
+   "dupont@b.fr",
+   true
+  ],
+  [
+   "SHOP_B4_PASSWORD",
+   "q",
+   true
+  ],
+  [
+   "SHOP_B4_API_KEY",
+   "k",
+   true
+  ],
+  [
+   "M_ME_ORDRE",
+   "p",
+   true
+  ],
+  [
+   "M_ME_ORDRE_C2",
+   "q",
+   true
+  ],
+  [
+   "SANS_SECRET",
+   "p",
+   true
+  ]
+ ],
+ "slugs": {
+  "": "",
+  "  x--y ": "X_Y",
+  "1abc": "X1ABC",
+  "9": "X9",
+  "A_b-c": "A_B_C",
+  "a b": "A_B",
+  "x.y.z": "X_Y_Z",
+  "é": ""
+ }
+}

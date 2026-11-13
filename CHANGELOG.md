@@ -1,5 +1,44 @@
 # Journal des versions
 
+## 1.13.0
+
+Une application native pour macOS (SwiftUI), dans `macos/`.
+
+- **Parité avec l'application GTK** : liste rangée par service (le regroupement est un port à
+  l'identique de `Taxonomy`, vérifié contre le script Python), recherche, valeurs masquées, copie
+  marquée confidentielle et effacée au bout de 45 s, fermer = masquer.
+- **Écriture** : nouveau, modifier, supprimer avec « Annuler » pendant 8 s (origine et export
+  conservés), import d'un `.env`, changer de groupe. Chaque écriture prend le verrou partagé avec la
+  ligne de commande, relit le coffre, écrit, puis régénère le cache des shells ; testé avec trois
+  processus Python et trois fils Swift qui écrivent en même temps, sans mise à jour perdue.
+- **Bitwarden et AWS** : connexion, déverrouillage et synchronisation (manuelle, puis automatique),
+  import des profils AWS avec `credential_process`. Le mot de passe maître et la clé de session ne
+  passent que par l'environnement de `bw`, jamais par un argument.
+- **Réglages** : Touch ID avant d'afficher ou de copier (réglable, désactivé par défaut),
+  Bitwarden, AWS.
+- **Design** : « papier & cuivre », clair et sombre, contrastes AA vérifiés par `make mac-test`,
+  entrée échelonnée des lignes (respecte « Réduire les animations »), icône `.icns`.
+- `make mac` assemble `ClaudeSecrets.app` (Command Line Tools seulement, signature ad hoc et
+  hardened runtime). Le service de trousseau se surcharge par `CLAUDE_SECRETS_SERVICE` et l'état par
+  `CLAUDE_SECRETS_STATE`, ce qui permet de tout tester sans toucher au vrai coffre.
+- **Dossier Bitwarden vide = tout le coffre** (tous dossiers confondus) ; `/` = les éléments sans dossier
+  (`bw list items --folderid null`) ; sinon le dossier de ce nom. Dans l'application comme dans la CLI
+  (`bw-setup` : `*` pour tout le coffre, `/` pour la racine). Origines : `bitwarden:*` et `bitwarden:/`.
+  Le réglage vide est conservé (il ne revient plus au dossier par défaut) ; seule l'absence de réglage
+  donne « Claude Secrets ».
+- **Éléments de même nom : plus d'écrasement.** Plusieurs comptes sur un même site (même nom d'élément)
+  donnaient les mêmes variables, et le dernier écrasait les autres (sur un vrai coffre de 442 éléments,
+  une centaine d'accès différents étaient perdus). Le plus ancien garde le nom simple, donc rien ne
+  change pour ce qui existe ; les autres reçoivent un suffixe stable : leur identifiant (`HUBSPOT_MARIE_USER`,
+  d'abord la partie avant le `@`, puis l'adresse entière), à défaut un repère tiré de l'identifiant interne
+  de l'élément (`HUBSPOT_A3F9C2D1`). Même règle dans la CLI et dans l'application (vérifiée contre le
+  script Python par `make mac-test`). `macos/Tools/bw-census.py` compte les collisions sans rien afficher
+  de secret.
+- **Une seule demande d'autorisation du trousseau** : la valeur du coffre n'est relue que si la date de
+  modification de l'élément a changé (cette date se lit sans autorisation). Au lancement, l'application
+  ne demande donc l'accès qu'une fois (zéro avec « Toujours autoriser »), au lieu d'une fois par lecture.
+- Limite connue : relire un coffre écrit par un autre programme prend quelques secondes (c'est la demande d'autorisation du trousseau), d'où une lecture unique au lancement.
+
 ## 1.12.0
 
 Paquets : un `.deb` et un AppImage.

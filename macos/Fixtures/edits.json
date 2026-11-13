@@ -1,0 +1,57 @@
+{
+ "env_parsed": [
+  [
+   "FOO",
+   "bar"
+  ],
+  [
+   "BAZ",
+   "quoted value"
+  ],
+  [
+   "QUX",
+   "single quoted"
+  ],
+  [
+   "INDENTED_OK",
+   "trimmed"
+  ],
+  [
+   "EQ",
+   "a=b=c"
+  ],
+  [
+   "TWO_SPACES",
+   "v"
+  ],
+  [
+   "QUOTE_MID",
+   "ab\"cd"
+  ],
+  [
+   "ONLYQ",
+   "\""
+  ],
+  [
+   "UNI",
+   "é✓"
+  ]
+ ],
+ "env_text": "# commentaire\nFOO=bar\nexport BAZ=\"quoted value\"\nQUX='single quoted'\n  SPACED = nope\nINDENTED_OK=  trimmed  \nEMPTY=\nlower=case\n1BAD=x\nEQ=a=b=c\nexport  TWO_SPACES=v\nQUOTE_MID=ab\"cd\nONLYQ=\"\nUNI=é✓\n",
+ "quotes": {
+  "": "''",
+  "\"d\"": "'\"d\"'",
+  "#c": "'#c'",
+  "$HOME": "'$HOME'",
+  "\\": "'\\'",
+  "`x`": "'`x`'",
+  "a\nb": "'a\nb'",
+  "a b": "'a b'",
+  "a;b|c&d": "'a;b|c&d'",
+  "abc": "abc",
+  "it's": "'it'\"'\"'s'",
+  "x=y:z/w.v-u_t,s@r%q+p": "x=y:z/w.v-u_t,s@r%q+p",
+  "~": "'~'",
+  "é✓": "'é✓'"
+ }
+}
